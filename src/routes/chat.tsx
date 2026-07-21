@@ -69,6 +69,12 @@ function ChatPage() {
           messages: nextHistory
             .filter((m) => m !== OPENING)
             .map((m) => ({ role: m.role, content: m.content })),
+          library: recipes.map((r) => ({
+            id: r.id,
+            title: r.title,
+            description: r.description,
+            tags: r.tags,
+          })),
         },
       });
       setMessages((cur) => [
