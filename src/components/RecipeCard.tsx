@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import type { Recipe } from "@/lib/recipes-store";
+import { useRecipeImage } from "@/lib/recipe-images";
 
 export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number }) {
+  const imgSrc = useRecipeImage(recipe.id, recipe.image_url);
   const totalTime =
     [recipe.prep_time, recipe.cook_time].filter(Boolean).join(" + ") || "";
   const chapter = String(index + 1).padStart(2, "0");
@@ -30,9 +32,9 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
 
         <div className="relative">
           <div className="w-full aspect-[4/3] overflow-hidden bg-muted border border-rule/40 shadow-[0_18px_30px_-20px_rgba(43,31,20,0.5)]">
-            {recipe.image_url ? (
+            {imgSrc ? (
               <img
-                src={recipe.image_url}
+                src={imgSrc}
                 alt={recipe.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"

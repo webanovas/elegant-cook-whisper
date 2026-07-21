@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { putRecipeImage, deleteRecipeImage, IDB_MARKER } from "./recipe-images";
 
 export interface Ingredient {
   amount: string;
@@ -65,11 +66,49 @@ if (isBrowser()) {
   window.addEventListener("storage", (e) => {
     if (e.key === KEY) emit();
   });
+  // One-time migration: move any legacy data-URL images into IndexedDB.
+  queueMicrotask(() => {
+    try {
+      const all = readRaw();
+      let changed = false;
+      const next = all.map((r) => {
+        if (r.image_url && r.image_url.startsWith("data:")) {
+          putRecipeImage(r.id, r.image_url).catch(() => {});
+          changed = true;
+          return { ...r, image_url: IDB_MARKER + r.id };
+        }
+        return r;
+      });
+      if (changed) {
+        window.localStorage.setItem(KEY, JSON.stringify(next));
+        emit();
+      }
+    } catch {
+      /* ignore */
+    }
+  });
 }
 
 function writeRaw(next: Recipe[]) {
   if (!isBrowser()) return;
-  window.localStorage.setItem(KEY, JSON.stringify(next));
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(next));
+  } catch (e) {
+    // Quota exceeded — try to shed any lingering data-URL images to IDB and retry.
+    const cleaned = next.map((r) => {
+      if (r.image_url && r.image_url.startsWith("data:")) {
+        putRecipeImage(r.id, r.image_url).catch(() => {});
+        return { ...r, image_url: IDB_MARKER + r.id };
+      }
+      return r;
+    });
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(cleaned));
+      next = cleaned;
+    } catch (e2) {
+      throw e2;
+    }
+  }
   emit();
 }
 
@@ -118,9 +157,16 @@ export function saveRecipe(
   const all = readRaw();
   const now = new Date().toISOString();
   const id = recipe.id ?? cryptoRandomId();
+  let imageUrl = recipe.image_url;
+  if (imageUrl && imageUrl.startsWith("data:")) {
+    // Move heavy base64 images to IndexedDB so localStorage doesn't overflow.
+    putRecipeImage(id, imageUrl).catch((e) => console.error("image save failed", e));
+    imageUrl = IDB_MARKER + id;
+  }
   const full: Recipe = {
     ...recipe,
     id,
+    image_url: imageUrl,
     created_at: recipe.created_at ?? now,
     cookbook_id: recipe.cookbook_id ?? DEFAULT_BOOK_ID,
   } as Recipe;
@@ -138,11 +184,15 @@ export function moveRecipeToBook(id: string, cookbook_id: string) {
 export function deleteRecipeLocal(id: string) {
   const next = readRaw().filter((r) => r.id !== id);
   writeRaw(next);
+  deleteRecipeImage(id);
 }
 
 export function deleteRecipesInBook(bookId: string) {
-  const next = readRaw().filter((r) => r.cookbook_id !== bookId);
+  const all = readRaw();
+  const toDelete = all.filter((r) => r.cookbook_id === bookId);
+  const next = all.filter((r) => r.cookbook_id !== bookId);
   writeRaw(next);
+  toDelete.forEach((r) => deleteRecipeImage(r.id));
 }
 
 function cryptoRandomId(): string {
