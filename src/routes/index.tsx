@@ -1,28 +1,23 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { extractRecipe, listRecipes } from "@/lib/recipes.functions";
+import { extractRecipe } from "@/lib/recipes.functions";
+import { saveRecipe, useRecipes } from "@/lib/recipes-store";
 import { RecipeCard } from "@/components/RecipeCard";
 
-const recipesQuery = queryOptions({
-  queryKey: ["recipes"],
-  queryFn: () => listRecipes(),
-});
-
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Gourmet Notes — A private cookbook" },
       {
         name: "description",
         content:
-          "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step.",
+          "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step. Stored only on this device.",
       },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(recipesQuery),
   component: DashboardPage,
 });
 
@@ -32,13 +27,11 @@ function DashboardPage() {
       <div className="max-w-[520px] mx-auto paper-page rounded-[3px] book-spine overflow-hidden">
         <div className="paper-page-inner px-6 pt-14 pb-16">
           <Cover />
-          <Suspense fallback={<GridSkeleton />}>
-            <Contents />
-          </Suspense>
+          <Contents />
         </div>
       </div>
       <p className="mt-6 text-center small-caps text-[10px] text-ink-soft/70">
-        Volume I · Kept privately
+        Volume I · Kept privately on this device
       </p>
     </div>
   );
@@ -81,7 +74,7 @@ function Cover() {
         transition={{ duration: 0.6, delay: 0.5 }}
         className="mt-5 font-serif italic text-[15px] text-ink-soft text-balance leading-relaxed"
       >
-        A private cookbook, kept quietly.
+        A private cookbook, kept quietly on this device.
         <br />
         Clip a recipe from the web, or ask the cook what to make.
       </motion.p>
@@ -90,7 +83,7 @@ function Cover() {
 }
 
 function Contents() {
-  const { data: recipes } = useSuspenseQuery(recipesQuery);
+  const recipes = useRecipes();
 
   return (
     <>
@@ -128,9 +121,10 @@ function ImportCard() {
     setLoading(true);
     setError(null);
     try {
-      const recipe = await extract({ data: { url: url.trim() } });
+      const extracted = await extract({ data: { url: url.trim() } });
+      const saved = saveRecipe(extracted);
       setUrl("");
-      router.navigate({ to: "/recipes/$id", params: { id: recipe.id } });
+      router.navigate({ to: "/recipes/$id", params: { id: saved.id } });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -143,7 +137,6 @@ function ImportCard() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.6 }}
-      className=""
     >
       <p className="small-caps text-[10px] text-terracotta text-center">
         clip from the web
@@ -255,22 +248,6 @@ function EmptyState() {
         </Link>{" "}
         for ideas.
       </p>
-    </div>
-  );
-}
-
-function GridSkeleton() {
-  return (
-    <div className="mt-12">
-      <div className="h-6 w-32 bg-muted/60 rounded animate-pulse mb-6" />
-      <div className="space-y-10">
-        {[0, 1].map((i) => (
-          <div key={i} className="animate-pulse">
-            <div className="w-full aspect-[4/3] bg-muted/60 rounded mb-3" />
-            <div className="h-5 w-2/3 bg-muted/60 rounded" />
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
