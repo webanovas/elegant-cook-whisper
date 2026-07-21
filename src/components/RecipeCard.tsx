@@ -29,16 +29,14 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
         </div>
 
         <div className="relative">
-          <motion.div
-            layoutId={`recipe-hero-${recipe.id}`}
-            className="w-full aspect-[4/3] overflow-hidden bg-muted border border-rule/40 shadow-[0_18px_30px_-20px_rgba(43,31,20,0.5)]"
-          >
+          <div className="w-full aspect-[4/3] overflow-hidden bg-muted border border-rule/40 shadow-[0_18px_30px_-20px_rgba(43,31,20,0.5)]">
             {recipe.image_url ? (
               <img
                 src={recipe.image_url}
                 alt={recipe.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="w-full h-full grid place-items-center bg-gradient-to-br from-paper-deep to-muted">
@@ -47,7 +45,8 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
                 </span>
               </div>
             )}
-          </motion.div>
+          </div>
+
           {/* Hand-inscribed caption under the plate */}
           <div className="absolute -bottom-3 left-3 right-3 flex justify-center pointer-events-none">
             <span className="small-caps text-[9px] text-ink-soft bg-paper px-2">

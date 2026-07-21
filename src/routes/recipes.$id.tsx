@@ -46,15 +46,14 @@ function RecipeDetail() {
       <div className="max-w-[440px] mx-auto relative">
         {/* Hero */}
         <div className="relative">
-          <motion.div
-            layoutId={`recipe-hero-${recipe.id}`}
-            className="w-full aspect-[4/5] bg-muted overflow-hidden"
-          >
+          <div className="w-full aspect-[4/5] bg-muted overflow-hidden">
             {recipe.image_url ? (
               <img
                 src={recipe.image_url}
                 alt={recipe.title}
                 className="w-full h-full object-cover"
+                decoding="async"
+                fetchPriority="high"
               />
             ) : (
               <div className="w-full h-full grid place-items-center bg-gradient-to-br from-muted to-secondary">
@@ -63,7 +62,8 @@ function RecipeDetail() {
                 </span>
               </div>
             )}
-          </motion.div>
+          </div>
+
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
           <Link
             to="/"
