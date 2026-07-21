@@ -229,12 +229,7 @@ function SectionHeading({ count }: { count: number }) {
   return (
     <div className="mt-2">
       <div className="ornament-rule">
-        <Link
-          to="/chat"
-          className="small-caps text-[11px] text-terracotta hover:text-ink transition-colors whitespace-nowrap"
-        >
-          Ask the Cook →
-        </Link>
+        <span className="text-gold">❦</span>
       </div>
       <div className="mt-10 flex items-baseline justify-between">
         <h2 className="font-serif text-2xl italic">The Kitchen</h2>
