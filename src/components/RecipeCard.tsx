@@ -1,8 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import type { Recipe } from "@/lib/recipes-store";
+import { useRecipeImage } from "@/lib/recipe-images";
 
 export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number }) {
+  const imgSrc = useRecipeImage(recipe.id, recipe.image_url);
   const totalTime =
     [recipe.prep_time, recipe.cook_time].filter(Boolean).join(" + ") || "";
   const chapter = String(index + 1).padStart(2, "0");
