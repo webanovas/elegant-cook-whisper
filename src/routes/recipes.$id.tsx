@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { deleteRecipeLocal, useRecipe } from "@/lib/recipes-store";
+import { useRecipeImage } from "@/lib/recipe-images";
 import { PortionScaler } from "@/components/PortionScaler";
 import { IngredientRow } from "@/components/IngredientRow";
 
@@ -18,6 +19,7 @@ function RecipeDetail() {
   const recipe = useRecipe(id);
   const router = useRouter();
   const [servings, setServings] = useState(recipe?.servings || 2);
+  const imgSrc = useRecipeImage(recipe?.id ?? "", recipe?.image_url ?? null);
 
   if (!recipe) {
     return (
@@ -47,9 +49,9 @@ function RecipeDetail() {
         {/* Hero */}
         <div className="relative">
           <div className="w-full aspect-[4/5] bg-muted overflow-hidden">
-            {recipe.image_url ? (
+            {imgSrc ? (
               <img
-                src={recipe.image_url}
+                src={imgSrc}
                 alt={recipe.title}
                 className="w-full h-full object-cover"
                 decoding="async"
