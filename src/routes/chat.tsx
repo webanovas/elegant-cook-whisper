@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatWithGemini, type RecipeSuggestion } from "@/lib/chat.functions";
+import { useRecipes } from "@/lib/recipes-store";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -32,6 +33,7 @@ const OPENING: UIMessage = {
 
 function ChatPage() {
   const send = useServerFn(chatWithGemini);
+  const recipes = useRecipes();
   const [messages, setMessages] = useState<UIMessage[]>([OPENING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,6 +69,12 @@ function ChatPage() {
           messages: nextHistory
             .filter((m) => m !== OPENING)
             .map((m) => ({ role: m.role, content: m.content })),
+          library: recipes.map((r) => ({
+            id: r.id,
+            title: r.title,
+            description: r.description,
+            tags: r.tags,
+          })),
         },
       });
       setMessages((cur) => [

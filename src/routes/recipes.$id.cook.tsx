@@ -1,35 +1,35 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { getRecipe } from "@/lib/recipes.functions";
+import { useRecipe } from "@/lib/recipes-store";
 import { CookTimer } from "@/components/CookTimer";
 
-const recipeQuery = (id: string) =>
-  queryOptions({
-    queryKey: ["recipe", id],
-    queryFn: () => getRecipe({ data: { id } }),
-  });
-
 export const Route = createFileRoute("/recipes/$id/cook")({
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(recipeQuery(params.id)),
-  head: ({ loaderData }) => ({
-    meta: [
-      {
-        title: loaderData ? `Cooking: ${loaderData.title}` : "Cook Mode",
-      },
-    ],
-  }),
+  ssr: false,
+  head: () => ({ meta: [{ title: "Cook Mode — Gourmet Notes" }] }),
   component: CookMode,
 });
 
 function CookMode() {
   const { id } = Route.useParams();
-  const { data: recipe } = useSuspenseQuery(recipeQuery(id));
-  const steps = recipe.instructions;
+  const recipe = useRecipe(id);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+
+  if (!recipe) {
+    return (
+      <div className="min-h-screen grid place-items-center px-6 bg-background">
+        <div className="text-center">
+          <p className="font-serif text-xl">Recipe not found on this device.</p>
+          <Link to="/" className="mt-4 inline-block text-sm text-primary underline">
+            Back to cookbook
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const steps = recipe.instructions;
   const total = steps.length;
 
   function go(delta: number) {
@@ -59,7 +59,6 @@ function CookMode() {
   return (
     <div className="min-h-screen h-[100dvh] bg-background text-foreground flex flex-col">
       <div className="max-w-[440px] w-full mx-auto flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="p-6 flex justify-between items-center">
           <Link
             to="/recipes/$id"
@@ -69,7 +68,7 @@ function CookMode() {
             Exit
           </Link>
           <div className="flex gap-1">
-            {steps.map((_, i) => (
+            {steps.map((_step, i) => (
               <div
                 key={i}
                 className={`h-1 rounded-full transition-all duration-300 ${
@@ -87,7 +86,6 @@ function CookMode() {
           </span>
         </header>
 
-        {/* Step */}
         <main className="flex-1 flex flex-col justify-center px-8 text-center overflow-hidden relative">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -111,7 +109,6 @@ function CookMode() {
           <CookTimer />
         </main>
 
-        {/* Nav */}
         <footer className="p-6 grid grid-cols-2 gap-4">
           <button
             type="button"

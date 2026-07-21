@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import type { Recipe } from "@/lib/recipes.functions";
+import type { Recipe } from "@/lib/recipes-store";
 
 export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number }) {
   const totalTime =

@@ -1,13 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1";
 
 const MessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string(),
+});
+
+const LibraryItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export interface ChatMessage {
@@ -25,34 +30,24 @@ export interface ChatReply {
   suggestions: RecipeSuggestion[];
 }
 
-function getServerSupabase() {
-  const url = process.env.SUPABASE_URL!;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-  return createClient<Database>(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
 export const chatWithGemini = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    z.object({ messages: z.array(MessageSchema).min(1).max(30) }).parse(input),
+    z
+      .object({
+        messages: z.array(MessageSchema).min(1).max(30),
+        library: z.array(LibraryItemSchema).max(200).optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data }): Promise<ChatReply> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const supabase = getServerSupabase();
-    const { data: rows } = await supabase
-      .from("recipes")
-      .select("id, title, description, tags")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    const library = (rows ?? []).map((r) => ({
-      id: r.id as string,
-      title: r.title as string,
-      description: (r.description as string | null) ?? "",
-      tags: Array.isArray(r.tags) ? (r.tags as string[]) : [],
+    const library = (data.library ?? []).map((r) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description ?? "",
+      tags: r.tags ?? [],
     }));
 
     const libraryText = library.length
@@ -103,7 +98,6 @@ ${libraryText}`;
     };
     const raw = json.choices?.[0]?.message?.content ?? "";
 
-    // Parse [[RECIPE:id]] markers, resolve to titles, and strip them from the visible content.
     const idPattern = /\[\[RECIPE:([^\]]+)\]\]/g;
     const ids = new Set<string>();
     let match: RegExpExecArray | null;
