@@ -3,7 +3,6 @@ import { useState } from "react";
 import {
   useCookbooks,
   createCookbook,
-  deleteCookbook,
   type Cookbook,
 } from "@/lib/cookbooks-store";
 import { useRecipes } from "@/lib/recipes-store";
