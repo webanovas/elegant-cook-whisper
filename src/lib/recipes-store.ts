@@ -136,9 +136,16 @@ export function saveRecipe(
   const all = readRaw();
   const now = new Date().toISOString();
   const id = recipe.id ?? cryptoRandomId();
+  let imageUrl = recipe.image_url;
+  if (imageUrl && imageUrl.startsWith("data:")) {
+    // Move heavy base64 images to IndexedDB so localStorage doesn't overflow.
+    putRecipeImage(id, imageUrl).catch((e) => console.error("image save failed", e));
+    imageUrl = IDB_MARKER + id;
+  }
   const full: Recipe = {
     ...recipe,
     id,
+    image_url: imageUrl,
     created_at: recipe.created_at ?? now,
     cookbook_id: recipe.cookbook_id ?? DEFAULT_BOOK_ID,
   } as Recipe;
@@ -156,11 +163,15 @@ export function moveRecipeToBook(id: string, cookbook_id: string) {
 export function deleteRecipeLocal(id: string) {
   const next = readRaw().filter((r) => r.id !== id);
   writeRaw(next);
+  deleteRecipeImage(id);
 }
 
 export function deleteRecipesInBook(bookId: string) {
-  const next = readRaw().filter((r) => r.cookbook_id !== bookId);
+  const all = readRaw();
+  const toDelete = all.filter((r) => r.cookbook_id === bookId);
+  const next = all.filter((r) => r.cookbook_id !== bookId);
   writeRaw(next);
+  toDelete.forEach((r) => deleteRecipeImage(r.id));
 }
 
 function cryptoRandomId(): string {
