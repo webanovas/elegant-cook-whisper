@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatWithGemini, type RecipeSuggestion } from "@/lib/chat.functions";
+import { useRecipes } from "@/lib/recipes-store";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
