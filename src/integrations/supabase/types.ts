@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      recipes: {
+        Row: {
+          cook_time: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_prompt: string | null
+          image_url: string | null
+          ingredients: Json
+          instructions: Json
+          prep_time: string | null
+          servings: number | null
+          source_url: string | null
+          tags: string[] | null
+          title: string
+        }
+        Insert: {
+          cook_time?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_prompt?: string | null
+          image_url?: string | null
+          ingredients?: Json
+          instructions?: Json
+          prep_time?: string | null
+          servings?: number | null
+          source_url?: string | null
+          tags?: string[] | null
+          title: string
+        }
+        Update: {
+          cook_time?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_prompt?: string | null
+          image_url?: string | null
+          ingredients?: Json
+          instructions?: Json
+          prep_time?: string | null
+          servings?: number | null
+          source_url?: string | null
+          tags?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
