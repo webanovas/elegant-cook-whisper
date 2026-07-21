@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, useState } from "react";
@@ -14,11 +14,11 @@ const recipesQuery = queryOptions({
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Gourmet Notes — Your modern cookbook" },
+      { title: "Gourmet Notes — A private cookbook" },
       {
         name: "description",
         content:
-          "Save any recipe from the web with AI, scale portions, and cook in a focused step-by-step mode.",
+          "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step.",
       },
     ],
   }),
@@ -28,38 +28,90 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-[440px] mx-auto pb-16">
-        <Header />
-        <ImportCard />
-        <Suspense fallback={<GridSkeleton />}>
-          <RecipeGrid />
-        </Suspense>
+    <div className="min-h-screen py-6 sm:py-10 px-3">
+      <div className="max-w-[520px] mx-auto paper-page rounded-[3px] book-spine overflow-hidden">
+        <div className="paper-page-inner px-6 pt-14 pb-16">
+          <Cover />
+          <Suspense fallback={<GridSkeleton />}>
+            <Contents />
+          </Suspense>
+        </div>
       </div>
+      <p className="mt-6 text-center small-caps text-[10px] text-ink-soft/70">
+        Volume I · Kept privately
+      </p>
     </div>
   );
 }
 
-function Header() {
+function Cover() {
   return (
-    <header className="pt-12 px-6 pb-6">
-      <motion.h1
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="font-serif text-4xl leading-tight text-balance"
-      >
-        Gourmet Notes
-      </motion.h1>
+    <header className="text-center">
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.15 }}
-        className="mt-2 text-sm italic text-muted-foreground"
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="small-caps text-[11px] text-terracotta"
       >
-        A quiet little cookbook for the curious cook.
+        being a personal
+      </motion.p>
+      <motion.h1
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+        className="mt-2 font-serif text-[3.4rem] leading-[0.95] tracking-tight"
+      >
+        <span className="italic">Gourmet</span>
+        <br />
+        Notes
+      </motion.h1>
+      <motion.div
+        initial={{ opacity: 0, scaleX: 0 }}
+        animate={{ opacity: 1, scaleX: 1 }}
+        transition={{ duration: 0.7, delay: 0.35 }}
+        className="mx-auto mt-5 flex items-center gap-3 max-w-[240px]"
+      >
+        <span className="flex-1 h-px bg-rule/60" />
+        <span className="text-gold text-lg">❦</span>
+        <span className="flex-1 h-px bg-rule/60" />
+      </motion.div>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+        className="mt-5 font-serif italic text-[15px] text-ink-soft text-balance leading-relaxed"
+      >
+        A private cookbook, kept quietly.
+        <br />
+        Clip a recipe from the web, or ask the cook what to make.
       </motion.p>
     </header>
+  );
+}
+
+function Contents() {
+  const { data: recipes } = useSuspenseQuery(recipesQuery);
+
+  return (
+    <>
+      <div className="mt-10">
+        <ImportCard />
+        <AskTheCookLink />
+      </div>
+
+      <div className="mt-12">
+        <SectionHeading count={recipes.length} />
+        {recipes.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-10">
+            {recipes.map((r, i) => (
+              <RecipeCard key={r.id} recipe={r} index={i} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -90,76 +142,91 @@ function ImportCard() {
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-      className="mx-6 mb-10"
+      transition={{ duration: 0.5, delay: 0.6 }}
+      className=""
     >
-      <div className="bg-primary/5 border border-primary/10 rounded-xl p-4">
-        <p className="text-[11px] uppercase tracking-wider text-primary font-medium mb-2">
-          Import from the web
+      <p className="small-caps text-[10px] text-terracotta text-center">
+        clip from the web
+      </p>
+      <form onSubmit={onSubmit} className="mt-3 flex gap-2">
+        <input
+          type="url"
+          required
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Paste any recipe URL…"
+          className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+        >
+          {loading ? "Reading…" : "Clip"}
+        </button>
+      </form>
+      {error && (
+        <p className="mt-2 text-xs text-destructive italic">{error}</p>
+      )}
+      {loading && (
+        <p className="mt-2 text-xs text-ink-soft italic">
+          Transcribing to a fresh page & plating a picture…
         </p>
-        <form onSubmit={onSubmit} className="flex gap-2">
-          <input
-            type="url"
-            required
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="Paste recipe URL…"
-            className="flex-1 bg-card border-none rounded py-2 px-3 text-sm shadow-sm ring-1 ring-black/5 outline-none focus:ring-primary/40"
-            disabled={loading}
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
-          >
-            {loading ? "Reading…" : "Add"}
-          </button>
-        </form>
-        {error && (
-          <p className="mt-2 text-xs text-destructive leading-relaxed">{error}</p>
-        )}
-        {loading && (
-          <p className="mt-2 text-xs text-muted-foreground italic">
-            Extracting, styling, and photographing your recipe…
-          </p>
-        )}
-      </div>
+      )}
     </motion.section>
   );
 }
 
-function RecipeGrid() {
-  const { data: recipes } = useSuspenseQuery(recipesQuery);
-
+function AskTheCookLink() {
   return (
-    <main className="px-6">
-      <div className="flex justify-between items-end mb-6">
-        <h2 className="font-serif text-xl">Recent Plates</h2>
-        <span className="text-xs text-muted-foreground">
-          {recipes.length} {recipes.length === 1 ? "recipe" : "recipes"}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6, delay: 0.75 }}
+      className="mt-6 flex items-center gap-3"
+    >
+      <span className="flex-1 h-px bg-rule/40" />
+      <span className="small-caps text-[10px] text-ink-soft">or</span>
+      <span className="flex-1 h-px bg-rule/40" />
+    </motion.div>
+  );
+}
+
+function SectionHeading({ count }: { count: number }) {
+  return (
+    <div className="mt-2">
+      <div className="ornament-rule">
+        <Link
+          to="/chat"
+          className="small-caps text-[11px] text-terracotta hover:text-ink transition-colors whitespace-nowrap"
+        >
+          Ask the Cook →
+        </Link>
+      </div>
+      <div className="mt-10 flex items-baseline justify-between">
+        <h2 className="font-serif text-2xl italic">The Kitchen</h2>
+        <span className="small-caps text-[10px] text-ink-soft">
+          {count === 0 ? "no entries" : `${count} ${count === 1 ? "entry" : "entries"}`}
         </span>
       </div>
-      {recipes.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="grid grid-cols-1 gap-8">
-          {recipes.map((r, i) => (
-            <RecipeCard key={r.id} recipe={r} index={i} />
-          ))}
-        </div>
-      )}
-    </main>
+      <div className="mt-1 h-px bg-ink/15" />
+    </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="text-center py-16 border border-dashed border-border rounded-xl">
-      <p className="font-serif italic text-lg text-muted-foreground">
-        Your cookbook is empty.
+    <div className="mt-8 text-center py-14 border border-dashed border-rule/60 rounded-md bg-paper-deep/30">
+      <p className="font-serif italic text-lg text-ink">
+        The pages are blank.
       </p>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Paste a recipe URL above to begin.
+      <p className="mt-2 text-sm text-ink-soft">
+        Clip a recipe above, or{" "}
+        <Link to="/chat" className="text-terracotta underline underline-offset-4">
+          ask the cook
+        </Link>{" "}
+        for ideas.
       </p>
     </div>
   );
@@ -167,16 +234,16 @@ function EmptyState() {
 
 function GridSkeleton() {
   return (
-    <main className="px-6">
-      <div className="h-6 w-32 bg-muted rounded animate-pulse mb-6" />
-      <div className="space-y-8">
+    <div className="mt-12">
+      <div className="h-6 w-32 bg-muted/60 rounded animate-pulse mb-6" />
+      <div className="space-y-10">
         {[0, 1].map((i) => (
           <div key={i} className="animate-pulse">
-            <div className="w-full aspect-[4/3] bg-muted rounded-xl mb-3" />
-            <div className="h-5 w-2/3 bg-muted rounded" />
+            <div className="w-full aspect-[4/3] bg-muted/60 rounded mb-3" />
+            <div className="h-5 w-2/3 bg-muted/60 rounded" />
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
