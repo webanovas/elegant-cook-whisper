@@ -5,10 +5,18 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-serif: "Cormorant Garamond", "Lora", ui-serif, Georgia, serif;
+  --font-book: "Lora", ui-serif, Georgia, serif;
+  --font-sans: "Instrument Sans", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -28,70 +36,210 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-serif: "Lora", Georgia, serif;
-  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-ring-offset-background: var(--background);
+
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-terracotta: var(--terracotta);
+  --color-gold: var(--gold);
+  --color-rule: var(--rule);
 }
 
 :root {
   --radius: 0.5rem;
-  /* Warm white */
-  --background: oklch(0.985 0.006 85);
-  /* Charcoal */
-  --foreground: oklch(0.22 0.012 60);
-  --card: oklch(1 0 0);
-  --card-foreground: var(--foreground);
-  --popover: oklch(0.99 0.005 85);
-  --popover-foreground: var(--foreground);
-  /* Terracotta accent ~#a85d44 */
-  --primary: oklch(0.58 0.12 40);
-  --primary-foreground: oklch(0.985 0.006 85);
-  --secondary: oklch(0.94 0.008 70);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(0.94 0.008 70);
-  --muted-foreground: oklch(0.5 0.015 60);
-  --accent: oklch(0.58 0.12 40);
-  --accent-foreground: oklch(0.985 0.006 85);
-  --destructive: oklch(0.55 0.2 25);
-  --destructive-foreground: oklch(0.985 0.006 85);
-  --border: oklch(0.22 0.012 60 / 0.08);
-  --input: oklch(0.22 0.012 60 / 0.1);
-  --ring: oklch(0.58 0.12 40 / 0.5);
+
+  /* Vintage cookbook palette */
+  --paper: oklch(0.945 0.028 82);           /* aged cream #f2ead6 */
+  --paper-deep: oklch(0.88 0.035 78);       /* deeper cream shadow */
+  --ink: oklch(0.24 0.02 45);               /* warm dark ink #2b1f14 */
+  --ink-soft: oklch(0.42 0.02 50);          /* softer ink for body */
+  --terracotta: oklch(0.55 0.14 40);        /* #a85d44 */
+  --gold: oklch(0.68 0.08 78);              /* aged gold #b8935a */
+  --rule: oklch(0.62 0.04 55);              /* faded rule line */
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(0.965 0.02 82);
+  --card-foreground: var(--ink);
+  --popover: oklch(0.97 0.018 82);
+  --popover-foreground: var(--ink);
+  --primary: var(--terracotta);
+  --primary-foreground: oklch(0.97 0.02 82);
+  --secondary: oklch(0.9 0.03 78);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.9 0.025 80);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--gold);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.5 0.19 27);
+  --destructive-foreground: oklch(0.98 0.01 80);
+  --border: oklch(0.78 0.03 70);
+  --input: oklch(0.9 0.025 78);
+  --ring: var(--terracotta);
 }
 
 .dark {
-  --background: oklch(0.18 0.01 60);
-  --foreground: oklch(0.96 0.006 85);
-  --card: oklch(0.22 0.012 60);
-  --card-foreground: var(--foreground);
-  --popover: var(--card);
-  --popover-foreground: var(--foreground);
-  --primary: oklch(0.65 0.13 40);
-  --primary-foreground: oklch(0.18 0.01 60);
-  --secondary: oklch(0.26 0.012 60);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(0.26 0.012 60);
-  --muted-foreground: oklch(0.7 0.015 60);
-  --accent: oklch(0.65 0.13 40);
-  --accent-foreground: oklch(0.18 0.01 60);
-  --destructive: oklch(0.6 0.2 25);
-  --destructive-foreground: var(--foreground);
-  --border: oklch(1 0 0 / 0.08);
-  --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.65 0.13 40 / 0.5);
+  --paper: oklch(0.22 0.02 45);
+  --paper-deep: oklch(0.18 0.02 45);
+  --ink: oklch(0.94 0.02 80);
+  --ink-soft: oklch(0.78 0.02 78);
+  --terracotta: oklch(0.68 0.14 40);
+  --gold: oklch(0.78 0.09 78);
+  --rule: oklch(0.5 0.03 55);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(0.28 0.02 45);
+  --card-foreground: var(--ink);
+  --popover: oklch(0.28 0.02 45);
+  --popover-foreground: var(--ink);
+  --primary: var(--terracotta);
+  --primary-foreground: oklch(0.15 0.01 45);
+  --secondary: oklch(0.32 0.02 45);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.3 0.02 45);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--gold);
+  --accent-foreground: var(--ink);
+  --destructive: oklch(0.6 0.2 27);
+  --destructive-foreground: oklch(0.98 0.01 80);
+  --border: oklch(0.4 0.02 55);
+  --input: oklch(0.3 0.02 55);
+  --ring: var(--terracotta);
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
   }
+
+  html,
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
     font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 {
+
+  body {
+    background-image:
+      radial-gradient(
+        1200px 800px at 50% -10%,
+        color-mix(in oklab, var(--gold) 14%, transparent) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 600px at 100% 100%,
+        color-mix(in oklab, var(--terracotta) 8%, transparent) 0%,
+        transparent 55%
+      ),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.16  0 0 0 0 0.12  0 0 0 0 0.08  0 0 0 0.13 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-attachment: fixed;
+    background-size:
+      auto,
+      auto,
+      240px 240px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-serif);
     letter-spacing: -0.01em;
   }
+}
+
+/* Paper page — the main surface pretending to be a book leaf. */
+@utility paper-page {
+  position: relative;
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--paper) 96%, white 4%) 0%,
+      var(--paper) 40%,
+      color-mix(in oklab, var(--paper-deep) 92%, transparent) 100%
+    );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 40px 60px -30px color-mix(in oklab, var(--ink) 30%, transparent),
+    0 6px 20px -10px color-mix(in oklab, var(--ink) 20%, transparent);
+  border-left: 1px solid color-mix(in oklab, var(--ink) 6%, transparent);
+  border-right: 1px solid color-mix(in oklab, var(--ink) 6%, transparent);
+}
+
+@utility paper-page-inner {
+  position: relative;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.13  0 0 0 0 0.08  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23p)'/></svg>");
+  background-blend-mode: multiply;
+}
+
+/* Book spine — thin gutter shadow along an inside edge. */
+@utility book-spine {
+  position: relative;
+}
+@utility book-spine {
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 22px;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      color-mix(in oklab, var(--ink) 22%, transparent),
+      transparent 90%
+    );
+  }
+}
+
+/* Ornamental horizontal rule with a small floret in the middle. */
+@utility ornament-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: color-mix(in oklab, var(--terracotta) 80%, var(--ink) 20%);
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: color-mix(in oklab, var(--rule) 70%, transparent);
+  }
+}
+
+/* Small caps label. */
+@utility small-caps {
+  font-variant: small-caps;
+  letter-spacing: 0.18em;
+  text-transform: lowercase;
+}
+
+/* Drop cap for first letter of a paragraph. */
+@utility drop-cap {
+  &::first-letter {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 3.4em;
+    line-height: 0.9;
+    float: left;
+    padding: 0.15em 0.15em 0 0;
+    color: var(--terracotta);
+  }
+}
+
+/* Ink underline for section headings. */
+@utility ink-underline {
+  background-image: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--terracotta) 70%, transparent),
+    transparent
+  );
+  background-size: 100% 2px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  padding-bottom: 4px;
 }
