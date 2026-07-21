@@ -70,7 +70,24 @@ if (isBrowser()) {
 
 function writeRaw(next: Recipe[]) {
   if (!isBrowser()) return;
-  window.localStorage.setItem(KEY, JSON.stringify(next));
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(next));
+  } catch (e) {
+    // Quota exceeded — try to shed any lingering data-URL images to IDB and retry.
+    const cleaned = next.map((r) => {
+      if (r.image_url && r.image_url.startsWith("data:")) {
+        putRecipeImage(r.id, r.image_url).catch(() => {});
+        return { ...r, image_url: IDB_MARKER + r.id };
+      }
+      return r;
+    });
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(cleaned));
+      next = cleaned;
+    } catch (e2) {
+      throw e2;
+    }
+  }
   emit();
 }
 
