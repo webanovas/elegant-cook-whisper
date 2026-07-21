@@ -255,5 +255,3 @@ function NewBookForm({
   );
 }
 
-// exported for the book detail page delete flow
-export { deleteCookbook };
