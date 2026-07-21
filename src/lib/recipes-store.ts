@@ -20,9 +20,11 @@ export interface Recipe {
   image_prompt: string | null;
   source_url: string | null;
   created_at: string;
+  cookbook_id: string;
 }
 
 const KEY = "gourmet-notes:recipes:v1";
+const DEFAULT_BOOK_ID = "general";
 const listeners = new Set<() => void>();
 
 function isBrowser() {
@@ -35,13 +37,17 @@ function readRaw(): Recipe[] {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Recipe[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    // Backfill cookbook_id for legacy entries.
+    return (parsed as Array<Partial<Recipe>>).map((r) => ({
+      ...(r as Recipe),
+      cookbook_id: r.cookbook_id || DEFAULT_BOOK_ID,
+    }));
   } catch {
     return [];
   }
 }
 
-// Cache snapshot so useSyncExternalStore gets a stable reference.
 let cache: Recipe[] = [];
 let cacheInitialized = false;
 
@@ -88,6 +94,11 @@ export function useRecipes(): Recipe[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+export function useRecipesInBook(bookId: string): Recipe[] {
+  const all = useRecipes();
+  return all.filter((r) => r.cookbook_id === bookId);
+}
+
 export function useRecipe(id: string): Recipe | undefined {
   const all = useRecipes();
   return all.find((r) => r.id === id);
@@ -97,7 +108,13 @@ export function listRecipesSync(): Recipe[] {
   return readRaw();
 }
 
-export function saveRecipe(recipe: Omit<Recipe, "id" | "created_at"> & { id?: string; created_at?: string }): Recipe {
+export function saveRecipe(
+  recipe: Omit<Recipe, "id" | "created_at" | "cookbook_id"> & {
+    id?: string;
+    created_at?: string;
+    cookbook_id?: string;
+  },
+): Recipe {
   const all = readRaw();
   const now = new Date().toISOString();
   const id = recipe.id ?? cryptoRandomId();
@@ -105,14 +122,26 @@ export function saveRecipe(recipe: Omit<Recipe, "id" | "created_at"> & { id?: st
     ...recipe,
     id,
     created_at: recipe.created_at ?? now,
+    cookbook_id: recipe.cookbook_id ?? DEFAULT_BOOK_ID,
   } as Recipe;
   const next = [full, ...all.filter((r) => r.id !== id)];
   writeRaw(next);
   return full;
 }
 
+export function moveRecipeToBook(id: string, cookbook_id: string) {
+  const all = readRaw();
+  const next = all.map((r) => (r.id === id ? { ...r, cookbook_id } : r));
+  writeRaw(next);
+}
+
 export function deleteRecipeLocal(id: string) {
   const next = readRaw().filter((r) => r.id !== id);
+  writeRaw(next);
+}
+
+export function deleteRecipesInBook(bookId: string) {
+  const next = readRaw().filter((r) => r.cookbook_id !== bookId);
   writeRaw(next);
 }
 

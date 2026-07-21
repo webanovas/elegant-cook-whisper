@@ -1,253 +1,260 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { extractRecipe } from "@/lib/recipes.functions";
-import { saveRecipe, useRecipes } from "@/lib/recipes-store";
-import { RecipeCard } from "@/components/RecipeCard";
+import {
+  useCookbooks,
+  createCookbook,
+  deleteCookbook,
+  type Cookbook,
+} from "@/lib/cookbooks-store";
+import { useRecipes } from "@/lib/recipes-store";
 
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Gourmet Notes — A private cookbook" },
+      { title: "Gourmet Notes — Your cookbook shelf" },
       {
         name: "description",
         content:
-          "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step. Stored only on this device.",
+          "A private shelf of vintage cookbooks. Open one, or start a new volume — cookies, pastas, whatever you're keeping.",
       },
     ],
   }),
-  component: DashboardPage,
+  component: ShelfPage,
 });
 
-function DashboardPage() {
+function ShelfPage() {
+  const books = useCookbooks();
+  const recipes = useRecipes();
+  const [creating, setCreating] = useState(false);
+
+  const countFor = (id: string) =>
+    recipes.filter((r) => r.cookbook_id === id).length;
+
   return (
-    <div className="min-h-screen py-6 sm:py-10 px-3">
-      <div className="max-w-[520px] mx-auto paper-page rounded-[3px] book-spine overflow-hidden">
-        <div className="paper-page-inner px-6 pt-14 pb-16">
-          <Cover />
-          <Contents />
+    <div className="min-h-screen py-8 sm:py-12 px-4">
+      <header className="text-center max-w-[520px] mx-auto">
+        <p className="small-caps text-[11px] text-terracotta">from the library of</p>
+        <h1 className="mt-2 font-serif text-[3rem] sm:text-[3.4rem] leading-[0.95] tracking-tight">
+          <span className="italic">Gourmet</span>
+          <br />
+          Notes
+        </h1>
+        <div className="mx-auto mt-5 flex items-center gap-3 max-w-[240px]">
+          <span className="flex-1 h-px bg-rule/60" />
+          <span className="text-gold text-lg">❦</span>
+          <span className="flex-1 h-px bg-rule/60" />
+        </div>
+        <p className="mt-5 font-serif italic text-[15px] text-ink-soft leading-relaxed">
+          Choose a cookbook from the shelf, or bind a new one.
+        </p>
+      </header>
+
+      <div className="mt-10 max-w-[720px] mx-auto">
+        <BookShelf books={books} countFor={countFor} />
+
+        <div className="mt-10">
+          {creating ? (
+            <NewBookForm
+              onClose={() => setCreating(false)}
+              onCreated={() => setCreating(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setCreating(true)}
+              className="mx-auto block small-caps text-[11px] text-terracotta hover:text-ink transition-colors border border-terracotta/40 rounded-full px-5 py-2"
+            >
+              + bind a new volume
+            </button>
+          )}
+        </div>
+
+        <div className="mt-14 text-center">
+          <Link
+            to="/chat"
+            className="inline-flex items-center gap-2 small-caps text-[11px] text-ink-soft hover:text-terracotta transition-colors"
+          >
+            ask the cook for ideas →
+          </Link>
         </div>
       </div>
-      <p className="mt-6 text-center small-caps text-[10px] text-ink-soft/70">
-        Volume I · Kept privately on this device
+
+      <p className="mt-14 text-center small-caps text-[10px] text-ink-soft/70">
+        kept privately on this device
       </p>
     </div>
   );
 }
 
-function Cover() {
+function BookShelf({
+  books,
+  countFor,
+}: {
+  books: Cookbook[];
+  countFor: (id: string) => number;
+}) {
   return (
-    <header className="text-center">
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="small-caps text-[11px] text-terracotta"
-      >
-        being a personal
-      </motion.p>
-      <motion.h1
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-        className="mt-2 font-serif text-[3.4rem] leading-[0.95] tracking-tight"
-      >
-        <span className="italic">Gourmet</span>
-        <br />
-        Notes
-      </motion.h1>
-      <motion.div
-        initial={{ opacity: 0, scaleX: 0 }}
-        animate={{ opacity: 1, scaleX: 1 }}
-        transition={{ duration: 0.7, delay: 0.35 }}
-        className="mx-auto mt-5 flex items-center gap-3 max-w-[240px]"
-      >
-        <span className="flex-1 h-px bg-rule/60" />
-        <span className="text-gold text-lg">❦</span>
-        <span className="flex-1 h-px bg-rule/60" />
-      </motion.div>
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-        className="mt-5 font-serif italic text-[15px] text-ink-soft text-balance leading-relaxed"
-      >
-        A private cookbook, kept quietly on this device.
-        <br />
-        Clip a recipe from the web, or ask the cook what to make.
-      </motion.p>
-    </header>
+    <div className="relative">
+      {/* wooden shelf plank */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-8 items-end pb-4">
+        {books.map((b) => (
+          <BookOnShelf key={b.id} book={b} count={countFor(b.id)} />
+        ))}
+      </div>
+      <div
+        aria-hidden
+        className="h-3 rounded-sm shadow-[0_10px_18px_-10px_rgba(43,31,20,0.6)]"
+        style={{
+          background:
+            "linear-gradient(to bottom, #7a5231, #4b2f18 60%, #2e1c0e)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="h-1 bg-black/30 mx-2 rounded-b-sm"
+      />
+    </div>
   );
 }
 
-function Contents() {
-  const recipes = useRecipes();
+function BookOnShelf({ book, count }: { book: Cookbook; count: number }) {
+  const cover = `hsl(${book.hue} 40% 32%)`;
+  const coverDeep = `hsl(${book.hue} 45% 22%)`;
+  const gilt = `hsl(${book.hue} 50% 75%)`;
 
   return (
-    <>
-      <div className="mt-10 space-y-5">
-        <ImportCard />
-        <AskTheCookCard />
+    <Link
+      to="/books/$id"
+      params={{ id: book.id }}
+      className="group block relative"
+      style={{ perspective: "800px" }}
+    >
+      <div
+        className="relative mx-auto w-full max-w-[190px] aspect-[3/4] rounded-[3px] shadow-[0_18px_28px_-14px_rgba(0,0,0,0.55),0_4px_10px_-4px_rgba(0,0,0,0.4)] transition-transform duration-500 group-hover:-translate-y-1 group-hover:rotate-[-0.6deg]"
+        style={{
+          background: `linear-gradient(135deg, ${cover}, ${coverDeep})`,
+          transformOrigin: "bottom center",
+        }}
+      >
+        {/* spine highlight */}
+        <div
+          aria-hidden
+          className="absolute inset-y-0 left-0 w-2 rounded-l-[3px]"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(255,255,255,0.14), rgba(0,0,0,0.35))",
+          }}
+        />
+        {/* pages edge on right */}
+        <div
+          aria-hidden
+          className="absolute inset-y-1 right-0 w-1"
+          style={{
+            background:
+              "repeating-linear-gradient(to bottom, #f1e7ce 0 2px, #d9caa4 2px 3px)",
+            borderRadius: "0 2px 2px 0",
+          }}
+        />
+        {/* gilt frame */}
+        <div
+          className="absolute inset-4 rounded-[2px] flex flex-col items-center justify-center text-center px-2"
+          style={{
+            border: `1px solid ${gilt}`,
+            boxShadow: `inset 0 0 0 3px transparent, inset 0 0 0 4px ${gilt}22`,
+          }}
+        >
+          <span className="text-2xl mb-2 drop-shadow-sm">{book.emoji}</span>
+          <p
+            className="font-serif italic text-[15px] leading-tight"
+            style={{ color: gilt }}
+          >
+            {book.name}
+          </p>
+          {book.subtitle && (
+            <p
+              className="mt-1 small-caps text-[8px]"
+              style={{ color: `${gilt}cc` }}
+            >
+              {book.subtitle}
+            </p>
+          )}
+          <div
+            className="mt-3 h-px w-8"
+            style={{ background: `${gilt}66` }}
+          />
+          <p
+            className="mt-2 small-caps text-[8px]"
+            style={{ color: `${gilt}aa` }}
+          >
+            {count === 0
+              ? "empty"
+              : `${count} ${count === 1 ? "entry" : "entries"}`}
+          </p>
+        </div>
       </div>
-
-      <div className="mt-12">
-        <SectionHeading count={recipes.length} />
-        {recipes.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="mt-6 grid grid-cols-1 gap-10">
-            {recipes.map((r, i) => (
-              <RecipeCard key={r.id} recipe={r} index={i} />
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+      <p className="mt-3 text-center small-caps text-[9px] text-ink-soft">
+        open volume
+      </p>
+    </Link>
   );
 }
 
-function ImportCard() {
-  const router = useRouter();
-  const extract = useServerFn(extractRecipe);
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function NewBookForm({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [subtitle, setSubtitle] = useState("");
 
-  async function onSubmit(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!url.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const extracted = await extract({ data: { url: url.trim() } });
-      const saved = saveRecipe(extracted);
-      setUrl("");
-      router.navigate({ to: "/recipes/$id", params: { id: saved.id } });
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    if (!name.trim()) return;
+    createCookbook({ name, subtitle });
+    onCreated();
   }
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.6 }}
+    <form
+      onSubmit={submit}
+      className="max-w-[420px] mx-auto paper-page rounded-[3px] p-5"
     >
       <p className="small-caps text-[10px] text-terracotta text-center">
-        clip from the web
+        bind a new volume
       </p>
-      <form onSubmit={onSubmit} className="mt-3 flex gap-2">
-        <input
-          type="url"
-          required
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste any recipe URL…"
-          className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
-          disabled={loading}
-        />
+      <input
+        autoFocus
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Title (e.g. Cookies, Pastas)"
+        className="mt-3 w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-lg outline-none focus:border-terracotta"
+      />
+      <input
+        value={subtitle}
+        onChange={(e) => setSubtitle(e.target.value)}
+        placeholder="A short subtitle (optional)"
+        className="mt-3 w-full bg-transparent border-b border-rule/40 py-2 text-sm outline-none focus:border-terracotta"
+      />
+      <div className="mt-5 flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className="small-caps text-[10px] text-ink-soft px-3 py-2"
+        >
+          cancel
+        </button>
         <button
           type="submit"
-          disabled={loading}
-          className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+          className="bg-ink text-paper text-sm px-4 py-2 rounded active:scale-95 transition-transform"
         >
-          {loading ? "Reading…" : "Clip"}
+          Bind volume
         </button>
-      </form>
-      {error && (
-        <p className="mt-2 text-xs text-destructive italic">{error}</p>
-      )}
-      {loading && (
-        <p className="mt-2 text-xs text-ink-soft italic">
-          Transcribing to a fresh page & plating a picture…
-        </p>
-      )}
-    </motion.section>
-  );
-}
-
-function AskTheCookCard() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.7 }}
-    >
-      <Link
-        to="/chat"
-        className="group relative block overflow-hidden rounded-lg border border-terracotta/25 bg-gradient-to-br from-terracotta/[0.08] to-terracotta/[0.02] p-4 transition-all hover:border-terracotta/50 hover:shadow-[0_12px_28px_-14px_color-mix(in_oklab,var(--terracotta)_35%,transparent)]"
-      >
-        <div className="flex items-center gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-terracotta text-primary-foreground shadow-sm">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 20a8 8 0 0 0 8-8c0-4-8-13-8-13S4 8 4 12a8 8 0 0 0 8 8Z" />
-              <path d="M9 13h6" />
-              <path d="M12 10v6" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-serif text-[17px] italic leading-tight text-ink group-hover:text-terracotta transition-colors">
-              Ask the Cook
-            </p>
-            <p className="mt-0.5 text-[13px] leading-snug text-ink-soft">
-              Can't decide? Chat with the resident chef to find a saved recipe or discover something new.
-            </p>
-          </div>
-          <span className="text-terracotta text-lg transition-transform group-hover:translate-x-1">
-            →
-          </span>
-        </div>
-      </Link>
-    </motion.div>
-  );
-}
-
-function SectionHeading({ count }: { count: number }) {
-  return (
-    <div className="mt-2">
-      <div className="ornament-rule">
-        <span className="text-gold">❦</span>
       </div>
-      <div className="mt-10 flex items-baseline justify-between">
-        <h2 className="font-serif text-2xl italic">The Kitchen</h2>
-        <span className="small-caps text-[10px] text-ink-soft">
-          {count === 0 ? "no entries" : `${count} ${count === 1 ? "entry" : "entries"}`}
-        </span>
-      </div>
-      <div className="mt-1 h-px bg-ink/15" />
-    </div>
+    </form>
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="mt-8 text-center py-14 border border-dashed border-rule/60 rounded-md bg-paper-deep/30">
-      <p className="font-serif italic text-lg text-ink">
-        The pages are blank.
-      </p>
-      <p className="mt-2 text-sm text-ink-soft">
-        Clip a recipe above, or{" "}
-        <Link to="/chat" className="text-terracotta underline underline-offset-4">
-          ask the cook
-        </Link>{" "}
-        for ideas.
-      </p>
-    </div>
-  );
-}
+// exported for the book detail page delete flow
+export { deleteCookbook };
