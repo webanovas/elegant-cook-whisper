@@ -33,6 +33,7 @@ const OPENING: UIMessage = {
 
 function ChatPage() {
   const send = useServerFn(chatWithGemini);
+  const recipes = useRecipes();
   const [messages, setMessages] = useState<UIMessage[]>([OPENING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
