@@ -64,25 +64,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Gourmet Notes — Your modern cookbook" },
+      { title: "Gourmet Notes — A private cookbook" },
       {
         name: "description",
         content:
-          "An elegant, AI-powered cookbook. Save any recipe from the web, scale portions, and cook with a distraction-free step-by-step mode.",
+          "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step.",
       },
       { name: "author", content: "Gourmet Notes" },
-      { property: "og:title", content: "Gourmet Notes — Your modern cookbook" },
+      { property: "og:title", content: "Gourmet Notes — A private cookbook" },
       {
         property: "og:description",
         content:
-          "An elegant, AI-powered cookbook. Save any recipe, scale portions, and cook with focus.",
+          "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Gourmet Notes — A private cookbook" },
+      { name: "twitter:description", content: "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f1df7459-f261-4336-9323-3ad4f95e5dc8/id-preview-5aef2a82--8a636e3d-14da-4e55-8f02-9e669c3409cb.lovable.app-1784645800319.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f1df7459-f261-4336-9323-3ad4f95e5dc8/id-preview-5aef2a82--8a636e3d-14da-4e55-8f02-9e669c3409cb.lovable.app-1784645800319.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",
