@@ -66,6 +66,27 @@ if (isBrowser()) {
   window.addEventListener("storage", (e) => {
     if (e.key === KEY) emit();
   });
+  // One-time migration: move any legacy data-URL images into IndexedDB.
+  queueMicrotask(() => {
+    try {
+      const all = readRaw();
+      let changed = false;
+      const next = all.map((r) => {
+        if (r.image_url && r.image_url.startsWith("data:")) {
+          putRecipeImage(r.id, r.image_url).catch(() => {});
+          changed = true;
+          return { ...r, image_url: IDB_MARKER + r.id };
+        }
+        return r;
+      });
+      if (changed) {
+        window.localStorage.setItem(KEY, JSON.stringify(next));
+        emit();
+      }
+    } catch {
+      /* ignore */
+    }
+  });
 }
 
 function writeRaw(next: Recipe[]) {
