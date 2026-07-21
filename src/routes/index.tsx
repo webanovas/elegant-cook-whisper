@@ -94,9 +94,9 @@ function Contents() {
 
   return (
     <>
-      <div className="mt-10">
+      <div className="mt-10 space-y-5">
         <ImportCard />
-        <AskTheCookLink />
+        <AskTheCookCard />
       </div>
 
       <div className="mt-12">
@@ -178,17 +178,49 @@ function ImportCard() {
   );
 }
 
-function AskTheCookLink() {
+function AskTheCookCard() {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, delay: 0.75 }}
-      className="mt-6 flex items-center gap-3"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.7 }}
     >
-      <span className="flex-1 h-px bg-rule/40" />
-      <span className="small-caps text-[10px] text-ink-soft">or</span>
-      <span className="flex-1 h-px bg-rule/40" />
+      <Link
+        to="/chat"
+        className="group relative block overflow-hidden rounded-lg border border-terracotta/25 bg-gradient-to-br from-terracotta/[0.08] to-terracotta/[0.02] p-4 transition-all hover:border-terracotta/50 hover:shadow-[0_12px_28px_-14px_color-mix(in_oklab,var(--terracotta)_35%,transparent)]"
+      >
+        <div className="flex items-center gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-terracotta text-primary-foreground shadow-sm">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 20a8 8 0 0 0 8-8c0-4-8-13-8-13S4 8 4 12a8 8 0 0 0 8 8Z" />
+              <path d="M9 13h6" />
+              <path d="M12 10v6" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-serif text-[17px] italic leading-tight text-ink group-hover:text-terracotta transition-colors">
+              Ask the Cook
+            </p>
+            <p className="mt-0.5 text-[13px] leading-snug text-ink-soft">
+              Can't decide? Chat with the resident chef to find a saved recipe or discover something new.
+            </p>
+          </div>
+          <span className="text-terracotta text-lg transition-transform group-hover:translate-x-1">
+            →
+          </span>
+        </div>
+      </Link>
     </motion.div>
   );
 }
@@ -197,12 +229,7 @@ function SectionHeading({ count }: { count: number }) {
   return (
     <div className="mt-2">
       <div className="ornament-rule">
-        <Link
-          to="/chat"
-          className="small-caps text-[11px] text-terracotta hover:text-ink transition-colors whitespace-nowrap"
-        >
-          Ask the Cook →
-        </Link>
+        <span className="text-gold">❦</span>
       </div>
       <div className="mt-10 flex items-baseline justify-between">
         <h2 className="font-serif text-2xl italic">The Kitchen</h2>
