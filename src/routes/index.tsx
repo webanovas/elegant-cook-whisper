@@ -94,9 +94,9 @@ function Contents() {
 
   return (
     <>
-      <div className="mt-10">
+      <div className="mt-10 space-y-5">
         <ImportCard />
-        <AskTheCookLink />
+        <AskTheCookCard />
       </div>
 
       <div className="mt-12">
