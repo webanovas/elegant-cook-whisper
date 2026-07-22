@@ -60,7 +60,11 @@ function CookMode() {
   return (
     <div className="min-h-screen h-[100dvh] bg-background text-foreground flex flex-col">
       <div className="max-w-[440px] w-full mx-auto flex-1 flex flex-col overflow-hidden">
-        <header className="p-6 flex justify-between items-center">
+        <header
+          className={`p-6 flex justify-between items-center transition-opacity duration-300 ${
+            chromeHidden ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        >
           <Link
             to="/recipes/$id"
             params={{ id }}
@@ -87,7 +91,10 @@ function CookMode() {
           </span>
         </header>
 
-        <main className="flex-1 flex flex-col justify-center px-8 text-center overflow-hidden relative">
+        <main
+          className="flex-1 flex flex-col justify-center px-8 text-center overflow-hidden relative cursor-pointer"
+          onClick={() => setChromeHidden((v) => !v)}
+        >
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={index}
@@ -107,10 +114,22 @@ function CookMode() {
             </motion.div>
           </AnimatePresence>
 
-          <CookTimer />
+          <div onClick={(e) => e.stopPropagation()}>
+            <CookTimer />
+          </div>
+
+          {chromeHidden && (
+            <p className="absolute bottom-4 left-0 right-0 text-center small-caps text-[9px] text-ink-soft/60">
+              tap to show controls
+            </p>
+          )}
         </main>
 
-        <footer className="p-6 grid grid-cols-2 gap-4">
+        <footer
+          className={`p-6 grid grid-cols-2 gap-4 transition-opacity duration-300 ${
+            chromeHidden ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        >
           <button
             type="button"
             onClick={() => go(-1)}
