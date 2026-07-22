@@ -182,6 +182,13 @@ export function moveRecipeToBook(id: string, cookbook_id: string) {
   writeRaw(next);
 }
 
+export function setRecipeRating(id: string, rating: number) {
+  const clamped = Math.max(0, Math.min(5, Math.round(rating)));
+  const all = readRaw();
+  const next = all.map((r) => (r.id === id ? { ...r, rating: clamped } : r));
+  writeRaw(next);
+}
+
 export function deleteRecipeLocal(id: string) {
   const next = readRaw().filter((r) => r.id !== id);
   writeRaw(next);
