@@ -53,6 +53,67 @@ export const extractRecipe = createServerFn({ method: "POST" })
     };
   });
 
+export interface WebRecipeResult {
+  title: string;
+  url: string;
+  description: string | null;
+  source: string | null;
+}
+
+export const searchRecipesOnWeb = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ query: z.string().trim().min(2).max(120) }).parse(input),
+  )
+  .handler(async ({ data }): Promise<WebRecipeResult[]> => {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const fcKey = process.env.FIRECRAWL_API_KEY;
+    if (!lovableKey || !fcKey) throw new Error("Recipe search is not configured.");
+
+    const res = await fetch(
+      "https://connector-gateway.lovable.dev/firecrawl/v2/search",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": fcKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `${data.query} recipe`,
+          limit: 8,
+        }),
+      },
+    );
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Search failed [${res.status}]: ${body.slice(0, 200)}`);
+    }
+    const json = (await res.json()) as {
+      data?: { web?: Array<{ url: string; title?: string; description?: string }> } | Array<{ url: string; title?: string; description?: string }>;
+    };
+    const rows = Array.isArray(json.data)
+      ? json.data
+      : (json.data?.web ?? []);
+    return rows
+      .filter((r) => r.url)
+      .slice(0, 8)
+      .map((r) => {
+        let source: string | null = null;
+        try {
+          source = new URL(r.url).hostname.replace(/^www\./, "");
+        } catch {
+          /* ignore */
+        }
+        return {
+          title: r.title ?? r.url,
+          url: r.url,
+          description: r.description ?? null,
+          source,
+        };
+      });
+  });
+
 export const suggestSubstitute = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
@@ -67,3 +128,4 @@ export const suggestSubstitute = createServerFn({ method: "POST" })
     );
     return { alternatives };
   });
+
