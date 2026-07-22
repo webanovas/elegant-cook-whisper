@@ -15,6 +15,7 @@ function CookMode() {
   const recipe = useRecipe(id);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [chromeHidden, setChromeHidden] = useState(false);
 
   if (!recipe) {
     return (
