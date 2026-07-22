@@ -1,13 +1,18 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { extractRecipe } from "@/lib/recipes.functions";
+import {
+  extractRecipe,
+  searchRecipesOnWeb,
+  type WebRecipeResult,
+} from "@/lib/recipes.functions";
 import { classifyRecipeIntoBook } from "@/lib/classify.functions";
 import {
   saveRecipe,
   useRecipesInBook,
   deleteRecipesInBook,
 } from "@/lib/recipes-store";
+
 import {
   useCookbook,
   useCookbooks,
