@@ -22,6 +22,7 @@ export interface Recipe {
   source_url: string | null;
   created_at: string;
   cookbook_id: string;
+  rating?: number;
 }
 
 const KEY = "gourmet-notes:recipes:v1";
