@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import type { Recipe } from "@/lib/recipes-store";
 import { useRecipeImage } from "@/lib/recipe-images";
+import { StarRating } from "@/components/StarRating";
 
 export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number }) {
   const imgSrc = useRecipeImage(recipe.id, recipe.image_url);
