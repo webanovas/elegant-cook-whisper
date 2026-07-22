@@ -68,11 +68,16 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
           </p>
         )}
 
-        {recipe.tags.length > 0 && (
-          <p className="mt-3 small-caps text-[10px] text-ink-soft">
-            {recipe.tags.slice(0, 3).join(" · ")}
-          </p>
-        )}
+        <div className="mt-3 flex items-center justify-between gap-3">
+          {recipe.tags.length > 0 ? (
+            <p className="small-caps text-[10px] text-ink-soft">
+              {recipe.tags.slice(0, 3).join(" · ")}
+            </p>
+          ) : <span />}
+          {typeof recipe.rating === "number" && recipe.rating > 0 && (
+            <StarRating value={recipe.rating} readOnly size="sm" />
+          )}
+        </div>
       </Link>
     </motion.article>
   );
