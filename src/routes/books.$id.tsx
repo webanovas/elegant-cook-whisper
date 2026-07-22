@@ -21,6 +21,7 @@ import {
   GENERAL_BOOK,
 } from "@/lib/cookbooks-store";
 import { RecipeCard } from "@/components/RecipeCard";
+import { StarRating } from "@/components/StarRating";
 
 export const Route = createFileRoute("/books/$id")({
   ssr: false,
