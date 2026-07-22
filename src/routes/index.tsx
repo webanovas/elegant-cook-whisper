@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   useCookbooks,
@@ -289,11 +289,14 @@ function SearchAllRecipes({
   recipes: ReturnType<typeof useRecipes>;
   books: Cookbook[];
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [dishType, setDishType] = useState<string>("all");
   const [prepBucket, setPrepBucket] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"top" | "quick" | "newest" | "az">("top");
+  const [pickFlash, setPickFlash] = useState<string | null>(null);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -304,7 +307,7 @@ function SearchAllRecipes({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const bucket = PREP_BUCKETS.find((b) => b.id === prepBucket) ?? PREP_BUCKETS[0];
-    return recipes.filter((r) => {
+    const list = recipes.filter((r) => {
       if (minRating > 0 && (r.rating ?? 0) < minRating) return false;
       if (dishType !== "all" && !r.tags.some((t) => t.toLowerCase() === dishType.toLowerCase()))
         return false;
@@ -315,13 +318,49 @@ function SearchAllRecipes({
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [recipes, query, minRating, dishType, prepBucket]);
+    const sorted = [...list];
+    if (sortBy === "top") {
+      sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    } else if (sortBy === "quick") {
+      sorted.sort((a, b) => {
+        const am = parsePrepMinutes(a.prep_time) ?? Number.POSITIVE_INFINITY;
+        const bm = parsePrepMinutes(b.prep_time) ?? Number.POSITIVE_INFINITY;
+        return am - bm;
+      });
+    } else if (sortBy === "az") {
+      sorted.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+      sorted.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+    }
+    return sorted;
+  }, [recipes, query, minRating, dishType, prepBucket, sortBy]);
 
   function reset() {
     setQuery("");
     setMinRating(0);
     setDishType("all");
     setPrepBucket("all");
+    setSortBy("top");
+  }
+
+  function pickForMe() {
+    if (filtered.length === 0) return;
+    // Weight by rating: unrated = 1, rated = rating + 1 (so 5-star ~ 6x more likely than unrated)
+    const weights = filtered.map((r) => (r.rating ?? 0) + 1);
+    const total = weights.reduce((s, w) => s + w, 0);
+    let pick = Math.random() * total;
+    let chosen = filtered[0];
+    for (let i = 0; i < filtered.length; i++) {
+      pick -= weights[i];
+      if (pick <= 0) {
+        chosen = filtered[i];
+        break;
+      }
+    }
+    setPickFlash(chosen.title);
+    setTimeout(() => {
+      router.navigate({ to: "/recipes/$id", params: { id: chosen.id } });
+    }, 450);
   }
 
   return (
@@ -405,22 +444,52 @@ function SearchAllRecipes({
                   )}
                 </div>
               </div>
+
+              <label className="flex items-center justify-between gap-3">
+                <span className="small-caps text-[10px] text-ink-soft">sort by</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
+                >
+                  <option value="top">top rated</option>
+                  <option value="quick">quickest first</option>
+                  <option value="newest">most recent</option>
+                  <option value="az">a → z</option>
+                </select>
+              </label>
             </div>
 
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 flex items-center justify-between gap-2">
               <p className="small-caps text-[10px] text-ink-soft">
                 {filtered.length === 0
                   ? "nothing matches"
                   : `${filtered.length} of ${recipes.length}`}
               </p>
-              <button
-                type="button"
-                onClick={reset}
-                className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
-              >
-                reset
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={pickForMe}
+                  disabled={filtered.length === 0}
+                  className="small-caps text-[10px] text-terracotta border border-terracotta/40 rounded-full px-3 py-1 hover:bg-terracotta hover:text-paper transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-terracotta"
+                >
+                  ✦ pick one for me
+                </button>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
+                >
+                  reset
+                </button>
+              </div>
             </div>
+
+            {pickFlash && (
+              <p className="mt-2 text-center font-serif italic text-[13px] text-terracotta">
+                tonight: {pickFlash}…
+              </p>
+            )}
 
             <ul className="mt-3 max-h-[50vh] overflow-y-auto divide-y divide-rule/40 border-t border-rule/40">
               {filtered.map((r) => {
@@ -438,9 +507,7 @@ function SearchAllRecipes({
                           {[r.tags[0], mins ? `${mins} min` : r.prep_time].filter(Boolean).join(" · ") || "—"}
                         </p>
                       </div>
-                      {(r.rating ?? 0) > 0 && (
-                        <StarRating value={r.rating ?? 0} readOnly size="sm" />
-                      )}
+                      <StarRating value={r.rating ?? 0} readOnly size="sm" />
                     </Link>
                   </li>
                 );
