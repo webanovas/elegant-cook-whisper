@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { deleteRecipeLocal, useRecipe } from "@/lib/recipes-store";
+import { deleteRecipeLocal, setRecipeRating, useRecipe } from "@/lib/recipes-store";
 import { useRecipeImage } from "@/lib/recipe-images";
 import { PortionScaler } from "@/components/PortionScaler";
 import { IngredientRow } from "@/components/IngredientRow";
+import { StarRating } from "@/components/StarRating";
 
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
