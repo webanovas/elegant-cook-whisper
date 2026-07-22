@@ -259,3 +259,132 @@ function NewBookForm({
   );
 }
 
+function SearchAllRecipes({
+  recipes,
+  books,
+}: {
+  recipes: ReturnType<typeof useRecipes>;
+  books: Cookbook[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [minRating, setMinRating] = useState(0);
+  const [bookFilter, setBookFilter] = useState<string>("all");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return recipes.filter((r) => {
+      if (bookFilter !== "all" && r.cookbook_id !== bookFilter) return false;
+      if (minRating > 0 && (r.rating ?? 0) < minRating) return false;
+      if (!q) return true;
+      const hay = [
+        r.title,
+        r.description ?? "",
+        r.tags.join(" "),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [recipes, query, minRating, bookFilter]);
+
+  const active = query || minRating > 0 || bookFilter !== "all";
+
+  return (
+    <section className="mb-10">
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="mx-auto flex items-center gap-2 small-caps text-[11px] text-terracotta border border-terracotta/40 rounded-full px-5 py-2 hover:bg-terracotta/5 transition-colors"
+        >
+          <span>⌕</span>
+          search all recipes
+        </button>
+      ) : (
+        <div className="paper-page rounded-[3px] p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <p className="small-caps text-[10px] text-terracotta">
+              search the whole shelf
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setQuery("");
+                setMinRating(0);
+                setBookFilter("all");
+              }}
+              className="small-caps text-[10px] text-ink-soft hover:text-terracotta"
+            >
+              close
+            </button>
+          </div>
+          <input
+            autoFocus
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by name, ingredient tag, description…"
+            className="mt-3 w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-base outline-none focus:border-terracotta"
+          />
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <div className="flex items-center gap-2">
+              <span className="small-caps text-[10px] text-ink-soft">min stars</span>
+              <StarRating
+                value={minRating}
+                onChange={(v) => setMinRating(v)}
+                size="sm"
+              />
+              {minRating > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setMinRating(0)}
+                  className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta"
+                >
+                  any
+                </button>
+              )}
+            </div>
+
+            <label className="flex items-center gap-2">
+              <span className="small-caps text-[10px] text-ink-soft">volume</span>
+              <select
+                value={bookFilter}
+                onChange={(e) => setBookFilter(e.target.value)}
+                className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta"
+              >
+                <option value="all">all volumes</option>
+                {books.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {active && (
+            <div className="mt-6">
+              <p className="small-caps text-[10px] text-ink-soft mb-4">
+                {filtered.length === 0
+                  ? "nothing matches"
+                  : `${filtered.length} ${filtered.length === 1 ? "result" : "results"}`}
+              </p>
+              {filtered.length > 0 && (
+                <div className="grid grid-cols-1 gap-8">
+                  {filtered.map((r, i) => (
+                    <RecipeCard key={r.id} recipe={r} index={i} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+
