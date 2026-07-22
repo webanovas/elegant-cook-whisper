@@ -259,9 +259,32 @@ function NewBookForm({
   );
 }
 
+function parsePrepMinutes(s: string | null): number | null {
+  if (!s) return null;
+  const lower = s.toLowerCase();
+  let total = 0;
+  const h = lower.match(/(\d+(?:\.\d+)?)\s*(h|hr|hour|hours|שעה|שעות)/);
+  if (h) total += parseFloat(h[1]) * 60;
+  const m = lower.match(/(\d+)\s*(m|min|mins|minute|minutes|דק|דקות)/);
+  if (m) total += parseInt(m[1], 10);
+  if (total === 0) {
+    const n = lower.match(/(\d+)/);
+    if (n) total = parseInt(n[1], 10);
+  }
+  return total > 0 ? total : null;
+}
+
+const PREP_BUCKETS = [
+  { id: "all", label: "any length", test: (_: number | null) => true },
+  { id: "quick", label: "under 15 min", test: (n: number | null) => n !== null && n < 15 },
+  { id: "medium", label: "15 – 30 min", test: (n: number | null) => n !== null && n >= 15 && n <= 30 },
+  { id: "long", label: "30 – 60 min", test: (n: number | null) => n !== null && n > 30 && n <= 60 },
+  { id: "xlong", label: "over 1 hour", test: (n: number | null) => n !== null && n > 60 },
+] as const;
+
 function SearchAllRecipes({
   recipes,
-  books,
+  books: _books,
 }: {
   recipes: ReturnType<typeof useRecipes>;
   books: Cookbook[];
@@ -269,122 +292,171 @@ function SearchAllRecipes({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [minRating, setMinRating] = useState(0);
-  const [bookFilter, setBookFilter] = useState<string>("all");
+  const [dishType, setDishType] = useState<string>("all");
+  const [prepBucket, setPrepBucket] = useState<string>("all");
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    recipes.forEach((r) => r.tags.forEach((t) => t && set.add(t)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [recipes]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const bucket = PREP_BUCKETS.find((b) => b.id === prepBucket) ?? PREP_BUCKETS[0];
     return recipes.filter((r) => {
-      if (bookFilter !== "all" && r.cookbook_id !== bookFilter) return false;
       if (minRating > 0 && (r.rating ?? 0) < minRating) return false;
+      if (dishType !== "all" && !r.tags.some((t) => t.toLowerCase() === dishType.toLowerCase()))
+        return false;
+      if (prepBucket !== "all" && !bucket.test(parsePrepMinutes(r.prep_time))) return false;
       if (!q) return true;
-      const hay = [
-        r.title,
-        r.description ?? "",
-        r.tags.join(" "),
-      ]
+      const hay = [r.title, r.description ?? "", r.tags.join(" ")]
         .join(" ")
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [recipes, query, minRating, bookFilter]);
+  }, [recipes, query, minRating, dishType, prepBucket]);
 
-  const active = query || minRating > 0 || bookFilter !== "all";
+  function reset() {
+    setQuery("");
+    setMinRating(0);
+    setDishType("all");
+    setPrepBucket("all");
+  }
 
   return (
     <section className="mb-10">
-      {!open ? (
+      <div className="paper-page rounded-[3px] overflow-hidden">
         <button
           type="button"
-          onClick={() => setOpen(true)}
-          className="mx-auto flex items-center gap-2 small-caps text-[11px] text-terracotta border border-terracotta/40 rounded-full px-5 py-2 hover:bg-terracotta/5 transition-colors"
+          onClick={() => setOpen((o) => !o)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+          aria-expanded={open}
         >
-          <span>⌕</span>
-          search all recipes
+          <span className="flex items-center gap-2 small-caps text-[11px] text-terracotta">
+            <span>⌕</span>
+            search all recipes
+            <span className="text-ink-soft/70">· {recipes.length}</span>
+          </span>
+          <span
+            className={`text-terracotta text-xs transition-transform duration-300 ${
+              open ? "rotate-180" : ""
+            }`}
+          >
+            ▾
+          </span>
         </button>
-      ) : (
-        <div className="paper-page rounded-[3px] p-4 sm:p-5">
-          <div className="flex items-center justify-between">
-            <p className="small-caps text-[10px] text-terracotta">
-              search the whole shelf
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setQuery("");
-                setMinRating(0);
-                setBookFilter("all");
-              }}
-              className="small-caps text-[10px] text-ink-soft hover:text-terracotta"
-            >
-              close
-            </button>
-          </div>
-          <input
-            autoFocus
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, ingredient tag, description…"
-            className="mt-3 w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-base outline-none focus:border-terracotta"
-          />
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <div className="flex items-center gap-2">
-              <span className="small-caps text-[10px] text-ink-soft">min stars</span>
-              <StarRating
-                value={minRating}
-                onChange={(v) => setMinRating(v)}
-                size="sm"
-              />
-              {minRating > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setMinRating(0)}
-                  className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta"
+        {open && (
+          <div className="border-t border-rule/40 px-4 py-4 sm:px-5">
+            <input
+              autoFocus
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name, tag, description…"
+              className="w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-base outline-none focus:border-terracotta"
+            />
+
+            <div className="mt-4 grid gap-3">
+              <label className="flex items-center justify-between gap-3">
+                <span className="small-caps text-[10px] text-ink-soft">dish type</span>
+                <select
+                  value={dishType}
+                  onChange={(e) => setDishType(e.target.value)}
+                  className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
                 >
-                  any
-                </button>
-              )}
+                  <option value="all">all types</option>
+                  {allTags.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex items-center justify-between gap-3">
+                <span className="small-caps text-[10px] text-ink-soft">prep length</span>
+                <select
+                  value={prepBucket}
+                  onChange={(e) => setPrepBucket(e.target.value)}
+                  className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
+                >
+                  {PREP_BUCKETS.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="flex items-center justify-between gap-3">
+                <span className="small-caps text-[10px] text-ink-soft">min stars</span>
+                <div className="flex items-center gap-2">
+                  <StarRating value={minRating} onChange={setMinRating} size="sm" />
+                  {minRating > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setMinRating(0)}
+                      className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta"
+                    >
+                      any
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <label className="flex items-center gap-2">
-              <span className="small-caps text-[10px] text-ink-soft">volume</span>
-              <select
-                value={bookFilter}
-                onChange={(e) => setBookFilter(e.target.value)}
-                className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta"
-              >
-                <option value="all">all volumes</option>
-                {books.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {active && (
-            <div className="mt-6">
-              <p className="small-caps text-[10px] text-ink-soft mb-4">
+            <div className="mt-4 flex items-center justify-between">
+              <p className="small-caps text-[10px] text-ink-soft">
                 {filtered.length === 0
                   ? "nothing matches"
-                  : `${filtered.length} ${filtered.length === 1 ? "result" : "results"}`}
+                  : `${filtered.length} of ${recipes.length}`}
               </p>
-              {filtered.length > 0 && (
-                <div className="grid grid-cols-1 gap-8">
-                  {filtered.map((r, i) => (
-                    <RecipeCard key={r.id} recipe={r} index={i} />
-                  ))}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={reset}
+                className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
+              >
+                reset
+              </button>
             </div>
-          )}
-        </div>
-      )}
+
+            <ul className="mt-3 max-h-[50vh] overflow-y-auto divide-y divide-rule/40 border-t border-rule/40">
+              {filtered.map((r) => {
+                const mins = parsePrepMinutes(r.prep_time);
+                return (
+                  <li key={r.id}>
+                    <Link
+                      to="/recipes/$id"
+                      params={{ id: r.id }}
+                      className="flex items-center justify-between gap-3 py-3 hover:bg-terracotta/5 px-1 rounded transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-serif italic text-[15px] truncate">{r.title}</p>
+                        <p className="small-caps text-[9px] text-ink-soft/80 mt-0.5 truncate">
+                          {[r.tags[0], mins ? `${mins} min` : r.prep_time].filter(Boolean).join(" · ") || "—"}
+                        </p>
+                      </div>
+                      {(r.rating ?? 0) > 0 && (
+                        <StarRating value={r.rating ?? 0} readOnly size="sm" />
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+              {filtered.length === 0 && (
+                <li className="py-6 text-center small-caps text-[10px] text-ink-soft/70">
+                  no recipes match these filters
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
+
 
 
