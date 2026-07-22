@@ -62,6 +62,40 @@ function htmlToText(html: string): string {
 }
 
 export async function fetchPageText(url: string): Promise<string> {
+  // Prefer Firecrawl (bypasses bot walls, returns clean markdown).
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const fcKey = process.env.FIRECRAWL_API_KEY;
+  if (lovableKey && fcKey) {
+    try {
+      const res = await fetch(
+        "https://connector-gateway.lovable.dev/firecrawl/v2/scrape",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${lovableKey}`,
+            "X-Connection-Api-Key": fcKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url,
+            formats: ["markdown"],
+            onlyMainContent: true,
+          }),
+        },
+      );
+      if (res.ok) {
+        const json = (await res.json()) as {
+          markdown?: string;
+          data?: { markdown?: string };
+        };
+        const md = json.markdown ?? json.data?.markdown;
+        if (md && md.trim().length > 0) return md.slice(0, 18000);
+      }
+    } catch {
+      /* fall through to direct fetch */
+    }
+  }
+
   const res = await fetch(url, {
     headers: {
       "User-Agent":
@@ -73,6 +107,7 @@ export async function fetchPageText(url: string): Promise<string> {
   const html = await res.text();
   return htmlToText(html);
 }
+
 
 export async function extractRecipeFromText(
   pageText: string,

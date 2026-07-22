@@ -1,13 +1,18 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { extractRecipe } from "@/lib/recipes.functions";
+import {
+  extractRecipe,
+  searchRecipesOnWeb,
+  type WebRecipeResult,
+} from "@/lib/recipes.functions";
 import { classifyRecipeIntoBook } from "@/lib/classify.functions";
 import {
   saveRecipe,
   useRecipesInBook,
   deleteRecipesInBook,
 } from "@/lib/recipes-store";
+
 import {
   useCookbook,
   useCookbooks,
@@ -146,21 +151,26 @@ function ImportCard({ bookId }: { bookId: string }) {
   const router = useRouter();
   const extract = useServerFn(extractRecipe);
   const classify = useServerFn(classifyRecipeIntoBook);
+  const search = useServerFn(searchRecipesOnWeb);
+  const [mode, setMode] = useState<"url" | "search">("url");
   const [url, setUrl] = useState("");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<WebRecipeResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [importingUrl, setImportingUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [autoSort, setAutoSort] = useState(bookId === GENERAL_BOOK.id);
   const [note, setNote] = useState<string | null>(null);
   const books = useCookbooks();
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!url.trim()) return;
+  async function importFromUrl(sourceUrl: string) {
     setLoading(true);
     setError(null);
     setNote(null);
+    setImportingUrl(sourceUrl);
     try {
-      const extracted = await extract({ data: { url: url.trim() } });
+      const extracted = await extract({ data: { url: sourceUrl } });
 
       let targetBook = bookId;
       let noteMsg: string | null = null;
@@ -204,6 +214,29 @@ function ImportCard({ bookId }: { bookId: string }) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+      setImportingUrl(null);
+    }
+  }
+
+  async function onSubmitUrl(e: React.FormEvent) {
+    e.preventDefault();
+    if (!url.trim()) return;
+    await importFromUrl(url.trim());
+  }
+
+  async function onSubmitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!query.trim() || searching) return;
+    setSearching(true);
+    setError(null);
+    setResults(null);
+    try {
+      const rows = await search({ data: { query: query.trim() } });
+      setResults(rows);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSearching(false);
     }
   }
 
@@ -212,24 +245,101 @@ function ImportCard({ bookId }: { bookId: string }) {
       <p className="small-caps text-[10px] text-terracotta text-center">
         clip a recipe
       </p>
-      <form onSubmit={onSubmit} className="mt-3 flex gap-2">
-        <input
-          type="url"
-          required
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste any recipe URL…"
-          className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
-        >
-          {loading ? "Reading…" : "Clip"}
-        </button>
-      </form>
+
+      <div className="mt-3 flex items-center justify-center gap-2">
+        <ModeTab active={mode === "url"} onClick={() => setMode("url")}>
+          from a URL
+        </ModeTab>
+        <span className="text-ink-soft/40 text-[10px]">·</span>
+        <ModeTab active={mode === "search"} onClick={() => setMode("search")}>
+          search the web
+        </ModeTab>
+      </div>
+
+      {mode === "url" ? (
+        <form onSubmit={onSubmitUrl} className="mt-3 flex gap-2">
+          <input
+            type="url"
+            required
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Paste any recipe URL…"
+            className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+            disabled={loading}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+          >
+            {loading ? "Reading…" : "Clip"}
+          </button>
+        </form>
+      ) : (
+        <>
+          <form onSubmit={onSubmitSearch} className="mt-3 flex gap-2">
+            <input
+              type="text"
+              required
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="e.g. Neapolitan pizza dough"
+              className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+              disabled={searching || loading}
+            />
+            <button
+              type="submit"
+              disabled={searching || loading}
+              className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+            >
+              {searching ? "Searching…" : "Search"}
+            </button>
+          </form>
+
+          {results && results.length > 0 && (
+            <ul className="mt-4 divide-y divide-rule/40 border-y border-rule/40">
+              {results.map((r) => {
+                const isImporting = importingUrl === r.url;
+                return (
+                  <li key={r.url}>
+                    <button
+                      type="button"
+                      onClick={() => importFromUrl(r.url)}
+                      disabled={loading}
+                      className="w-full text-left py-3 px-1 flex items-start gap-3 hover:bg-terracotta/5 disabled:opacity-50 transition-colors rounded"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-serif italic text-[14px] leading-snug text-balance">
+                          {r.title}
+                        </p>
+                        {r.description && (
+                          <p className="mt-1 text-[11px] text-ink-soft line-clamp-2">
+                            {r.description}
+                          </p>
+                        )}
+                        {r.source && (
+                          <p className="mt-1 small-caps text-[9px] text-terracotta/80">
+                            {r.source}
+                          </p>
+                        )}
+                      </div>
+                      <span className="small-caps text-[10px] text-terracotta shrink-0 mt-1">
+                        {isImporting ? "clipping…" : "clip →"}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {results && results.length === 0 && (
+            <p className="mt-3 text-xs text-ink-soft italic text-center">
+              No recipes found. Try a different search.
+            </p>
+          )}
+        </>
+      )}
+
       <label className="mt-3 flex items-center justify-center gap-2 text-[11px] text-ink-soft cursor-pointer select-none">
         <input
           type="checkbox"
@@ -251,6 +361,31 @@ function ImportCard({ bookId }: { bookId: string }) {
     </section>
   );
 }
+
+function ModeTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`small-caps text-[10px] px-2 py-1 rounded transition-colors ${
+        active
+          ? "text-terracotta border-b border-terracotta"
+          : "text-ink-soft hover:text-terracotta"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 
 function SectionHeading({ count }: { count: number }) {
   return (
