@@ -74,9 +74,12 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
               {recipe.tags.slice(0, 3).join(" · ")}
             </p>
           ) : <span />}
-          {typeof recipe.rating === "number" && recipe.rating > 0 && (
-            <StarRating value={recipe.rating} readOnly size="sm" />
-          )}
+          <div className="flex items-center gap-2">
+            {(!recipe.rating || recipe.rating === 0) && (
+              <span className="small-caps text-[9px] text-ink-soft/60">unrated</span>
+            )}
+            <StarRating value={recipe.rating ?? 0} readOnly size="sm" />
+          </div>
         </div>
       </Link>
     </motion.article>
