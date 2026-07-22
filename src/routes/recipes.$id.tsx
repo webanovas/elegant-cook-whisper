@@ -92,10 +92,18 @@ function RecipeDetail() {
             {recipe.title}
           </h1>
           {recipe.description && (
-            <p className="text-sm text-muted-foreground italic text-pretty mb-6">
+            <p className="text-sm text-muted-foreground italic text-pretty mb-4">
               {recipe.description}
             </p>
           )}
+          <div className="mb-6 flex items-center gap-3">
+            <span className="small-caps text-[10px] text-ink-soft">your rating</span>
+            <StarRating
+              value={recipe.rating ?? 0}
+              onChange={(v) => setRecipeRating(recipe.id, v)}
+              size="md"
+            />
+          </div>
 
           <div className="flex justify-between py-6 border-y border-border">
             <MetaCell label="Prep" value={recipe.prep_time || "—"} />
