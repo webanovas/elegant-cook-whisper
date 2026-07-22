@@ -58,6 +58,37 @@ export interface WebRecipeResult {
   url: string;
   description: string | null;
   source: string | null;
+  rating: number | null;
+  reviews: number | null;
+}
+
+/** Pull a rating like 4.7 and review count from messy title/description text. */
+function extractRating(...parts: (string | null | undefined)[]): {
+  rating: number | null;
+  reviews: number | null;
+} {
+  const text = parts.filter(Boolean).join(" · ");
+  let rating: number | null = null;
+  let reviews: number | null = null;
+
+  const rMatch =
+    text.match(/(\d(?:\.\d)?)\s*(?:\/\s*5|out of\s*5|stars?|★)/i) ??
+    text.match(/★\s*(\d(?:\.\d)?)/) ??
+    text.match(/rating[:\s]+(\d(?:\.\d)?)/i);
+  if (rMatch) {
+    const n = parseFloat(rMatch[1]);
+    if (n >= 0 && n <= 5) rating = n;
+  }
+
+  const revMatch =
+    text.match(/\(([\d,]+)\)/) ??
+    text.match(/(\d[\d,]*)\s*(?:reviews?|ratings?|votes?)/i);
+  if (revMatch) {
+    const n = parseInt(revMatch[1].replace(/,/g, ""), 10);
+    if (!Number.isNaN(n)) reviews = n;
+  }
+
+  return { rating, reviews };
 }
 
 export const searchRecipesOnWeb = createServerFn({ method: "POST" })
@@ -79,7 +110,7 @@ export const searchRecipesOnWeb = createServerFn({ method: "POST" })
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: `${data.query} recipe`,
+          query: `${data.query} recipe rating reviews`,
           limit: 8,
         }),
       },
@@ -90,7 +121,9 @@ export const searchRecipesOnWeb = createServerFn({ method: "POST" })
       throw new Error(`Search failed [${res.status}]: ${body.slice(0, 200)}`);
     }
     const json = (await res.json()) as {
-      data?: { web?: Array<{ url: string; title?: string; description?: string }> } | Array<{ url: string; title?: string; description?: string }>;
+      data?:
+        | { web?: Array<{ url: string; title?: string; description?: string }> }
+        | Array<{ url: string; title?: string; description?: string }>;
     };
     const rows = Array.isArray(json.data)
       ? json.data
@@ -105,11 +138,14 @@ export const searchRecipesOnWeb = createServerFn({ method: "POST" })
         } catch {
           /* ignore */
         }
+        const { rating, reviews } = extractRating(r.title, r.description);
         return {
           title: r.title ?? r.url,
           url: r.url,
           description: r.description ?? null,
           source,
+          rating,
+          reviews,
         };
       });
   });

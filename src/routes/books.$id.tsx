@@ -21,6 +21,7 @@ import {
   GENERAL_BOOK,
 } from "@/lib/cookbooks-store";
 import { RecipeCard } from "@/components/RecipeCard";
+import { StarRating } from "@/components/StarRating";
 
 export const Route = createFileRoute("/books/$id")({
   ssr: false,
@@ -298,7 +299,9 @@ function ImportCard({ bookId }: { bookId: string }) {
 
           {results && results.length > 0 && (
             <ul className="mt-4 divide-y divide-rule/40 border-y border-rule/40">
-              {results.map((r) => {
+              {[...results]
+                .sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
+                .map((r) => {
                 const isImporting = importingUrl === r.url;
                 return (
                   <li key={r.url}>
@@ -312,6 +315,27 @@ function ImportCard({ bookId }: { bookId: string }) {
                         <p className="font-serif italic text-[14px] leading-snug text-balance">
                           {r.title}
                         </p>
+                        {(r.rating !== null || r.reviews !== null) && (
+                          <div className="mt-1 flex items-center gap-1.5">
+                            {r.rating !== null && (
+                              <>
+                                <StarRating
+                                  value={Math.round(r.rating)}
+                                  readOnly
+                                  size="sm"
+                                />
+                                <span className="small-caps text-[10px] text-ink">
+                                  {r.rating.toFixed(1)}
+                                </span>
+                              </>
+                            )}
+                            {r.reviews !== null && (
+                              <span className="text-[10px] text-ink-soft">
+                                ({r.reviews.toLocaleString()})
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {r.description && (
                           <p className="mt-1 text-[11px] text-ink-soft line-clamp-2">
                             {r.description}
