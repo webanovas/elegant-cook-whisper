@@ -22,6 +22,7 @@ export interface Recipe {
   source_url: string | null;
   created_at: string;
   cookbook_id: string;
+  rating?: number;
 }
 
 const KEY = "gourmet-notes:recipes:v1";
@@ -178,6 +179,13 @@ export function saveRecipe(
 export function moveRecipeToBook(id: string, cookbook_id: string) {
   const all = readRaw();
   const next = all.map((r) => (r.id === id ? { ...r, cookbook_id } : r));
+  writeRaw(next);
+}
+
+export function setRecipeRating(id: string, rating: number) {
+  const clamped = Math.max(0, Math.min(5, Math.round(rating)));
+  const all = readRaw();
+  const next = all.map((r) => (r.id === id ? { ...r, rating: clamped } : r));
   writeRaw(next);
 }
 
