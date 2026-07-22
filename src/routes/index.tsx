@@ -52,6 +52,8 @@ function ShelfPage() {
       </header>
 
       <div className="mt-10 max-w-[720px] mx-auto">
+        <SearchAllRecipes recipes={recipes} books={books} />
+
         <BookShelf books={books} countFor={countFor} />
 
         <div className="mt-10">
