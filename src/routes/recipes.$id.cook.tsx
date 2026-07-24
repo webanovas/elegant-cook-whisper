@@ -33,7 +33,7 @@ function CookMode() {
       });
       return out;
     }
-    return recipe.instructions.map((s) => ({ text: s }));
+    return recipe.instructions.map((s) => ({ text: s, section: undefined as string | undefined }));
   }, [recipe]);
 
   if (!recipe) {

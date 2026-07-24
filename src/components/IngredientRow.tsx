@@ -26,6 +26,8 @@ export function IngredientRow({
   );
   const [error, setError] = useState<string | null>(null);
   const suggest = useServerFn(suggestSubstitute);
+  const t = useT();
+
 
   const scaledAmount = scaleAmount(
     ingredient.amount ?? "",
