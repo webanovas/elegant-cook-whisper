@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { suggestSubstitute } from "@/lib/recipes.functions";
 import { scaleAmount } from "@/lib/scale";
 import type { Ingredient } from "@/lib/recipes.functions";
+import { useT } from "@/lib/i18n";
+
 
 export function IngredientRow({
   ingredient,

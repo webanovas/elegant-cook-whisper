@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRecipe } from "@/lib/recipes-store";
 import { CookTimer } from "@/components/CookTimer";
+import { useLang, useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/recipes/$id/cook")({
   ssr: false,
@@ -13,24 +14,41 @@ export const Route = createFileRoute("/recipes/$id/cook")({
 function CookMode() {
   const { id } = Route.useParams();
   const recipe = useRecipe(id);
+  const t = useT();
+  const lang = useLang();
+  const rtl = lang === "he";
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [chromeHidden, setChromeHidden] = useState(false);
+
+  // Flatten sections with section-title dividers, so multi-component recipes read cleanly.
+  const steps = useMemo(() => {
+    if (!recipe) return [] as Array<{ text: string; section?: string }>;
+    if (recipe.instruction_sections && recipe.instruction_sections.length > 0) {
+      const out: Array<{ text: string; section?: string }> = [];
+      recipe.instruction_sections.forEach((sec) => {
+        sec.steps.forEach((s, i) =>
+          out.push({ text: s, section: i === 0 ? sec.title : undefined }),
+        );
+      });
+      return out;
+    }
+    return recipe.instructions.map((s) => ({ text: s }));
+  }, [recipe]);
 
   if (!recipe) {
     return (
       <div className="min-h-screen grid place-items-center px-6 bg-background">
         <div className="text-center">
-          <p className="font-serif text-xl">Recipe not found on this device.</p>
+          <p className="font-serif text-xl">{t("cook_not_found")}</p>
           <Link to="/" className="mt-4 inline-block text-sm text-primary underline">
-            Back to cookbook
+            {t("back_cookbook")}
           </Link>
         </div>
       </div>
     );
   }
 
-  const steps = recipe.instructions;
   const total = steps.length;
 
   function go(delta: number) {
@@ -44,18 +62,23 @@ function CookMode() {
     return (
       <div className="min-h-screen grid place-items-center px-6 bg-background">
         <div className="text-center">
-          <p className="font-serif text-xl">No steps for this recipe.</p>
+          <p className="font-serif text-xl">{t("no_steps")}</p>
           <Link
             to="/recipes/$id"
             params={{ id }}
             className="mt-4 inline-block text-sm text-primary underline"
           >
-            Back to recipe
+            {t("back_recipe")}
           </Link>
         </div>
       </div>
     );
   }
+
+  // In RTL, "next" content should slide in from the left (visually the same
+  // logical direction as LTR). Flip the sign so the animation reads naturally.
+  const slideSign = rtl ? -1 : 1;
+  const current = steps[index];
 
   return (
     <div className="min-h-screen h-[100dvh] bg-background text-foreground flex flex-col">
@@ -70,9 +93,9 @@ function CookMode() {
             params={{ id }}
             className="text-[10px] uppercase tracking-widest font-medium"
           >
-            Exit
+            {t("exit")}
           </Link>
-          <div className="flex gap-1">
+          <div className="flex gap-1" dir="ltr">
             {steps.map((_step, i) => (
               <div
                 key={i}
@@ -86,7 +109,7 @@ function CookMode() {
               />
             ))}
           </div>
-          <span className="text-[10px] font-medium tabular-nums">
+          <span dir="ltr" className="text-[10px] font-medium tabular-nums">
             {index + 1} / {total}
           </span>
         </header>
@@ -99,17 +122,22 @@ function CookMode() {
             <motion.div
               key={index}
               custom={direction}
-              initial={{ x: direction * 60, opacity: 0 }}
+              initial={{ x: direction * slideSign * 60, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -direction * 60, opacity: 0 }}
+              exit={{ x: -direction * slideSign * 60, opacity: 0 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               className="mb-10"
             >
+              {current.section && (
+                <span className="small-caps text-[11px] text-terracotta mb-2 block">
+                  {current.section}
+                </span>
+              )}
               <span className="text-xs uppercase tracking-[0.2em] text-primary font-semibold mb-4 block">
-                Step {index + 1}
+                {t("step")} {index + 1}
               </span>
               <h2 className="font-serif text-2xl sm:text-3xl leading-snug text-balance">
-                {steps[index]}
+                {current.text}
               </h2>
             </motion.div>
           </AnimatePresence>
@@ -120,7 +148,7 @@ function CookMode() {
 
           {chromeHidden && (
             <p className="absolute bottom-4 left-0 right-0 text-center small-caps text-[9px] text-ink-soft/60">
-              tap to show controls
+              {t("tap_show")}
             </p>
           )}
         </main>
@@ -136,7 +164,7 @@ function CookMode() {
             disabled={index === 0}
             className="py-4 rounded-xl border border-border text-sm font-medium disabled:opacity-40"
           >
-            Previous
+            {t("previous")}
           </button>
           {index < total - 1 ? (
             <button
@@ -144,7 +172,7 @@ function CookMode() {
               onClick={() => go(1)}
               className="py-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
             >
-              Next Step
+              {t("next_step")}
             </button>
           ) : (
             <Link
@@ -152,7 +180,7 @@ function CookMode() {
               params={{ id }}
               className="py-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium grid place-items-center"
             >
-              Finish
+              {t("finish")}
             </Link>
           )}
         </footer>
