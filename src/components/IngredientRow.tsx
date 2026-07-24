@@ -99,7 +99,7 @@ export function IngredientRow({
           >
             <div className="mt-3 bg-primary/5 border border-primary/10 rounded-lg p-3 text-sm">
               {loading && (
-                <p className="text-muted-foreground italic">Thinking of alternatives…</p>
+                <p className="text-muted-foreground italic">{t("thinking_alts")}</p>
               )}
               {error && <p className="text-destructive text-xs">{error}</p>}
               {alts?.map((a, i) => (
@@ -113,8 +113,9 @@ export function IngredientRow({
                 onClick={() => setOpen(false)}
                 className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground"
               >
-                Close
+                {t("close")}
               </button>
+
             </div>
           </motion.div>
         )}
