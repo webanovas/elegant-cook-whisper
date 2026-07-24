@@ -2,17 +2,34 @@
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1";
 
+export interface Ingredient {
+  amount: string;
+  unit: string;
+  name: string;
+}
+export interface IngredientSection {
+  title: string;
+  items: Ingredient[];
+}
+export interface InstructionSection {
+  title: string;
+  steps: string[];
+}
+
 export interface ExtractedRecipe {
   title: string;
   description: string;
   prep_time: string;
   cook_time: string;
   servings: number;
-  ingredients: Array<{ amount: string; unit: string; name: string }>;
+  ingredients: Ingredient[];
   instructions: string[];
+  ingredient_sections?: IngredientSection[];
+  instruction_sections?: InstructionSection[];
   tags: string[];
   food_style_image_prompt: string;
 }
+
 
 async function callGemini(prompt: string, model: string): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
