@@ -7,6 +7,16 @@ export interface Ingredient {
   name: string;
 }
 
+export interface IngredientSection {
+  title: string;
+  items: Ingredient[];
+}
+
+export interface InstructionSection {
+  title: string;
+  steps: string[];
+}
+
 export interface ExtractedRecipe {
   title: string;
   description: string | null;
@@ -15,17 +25,14 @@ export interface ExtractedRecipe {
   servings: number;
   ingredients: Ingredient[];
   instructions: string[];
+  ingredient_sections?: IngredientSection[];
+  instruction_sections?: InstructionSection[];
   tags: string[];
   image_url: string | null;
   image_prompt: string | null;
   source_url: string | null;
 }
 
-/**
- * Fetches a URL, asks Gemini to extract the recipe, generates a hero image,
- * and returns the recipe as a plain object. The client saves it to localStorage
- * — nothing is persisted server-side.
- */
 export const extractRecipe = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z.object({ url: z.string().url("Please enter a valid URL") }).parse(input),
@@ -46,12 +53,15 @@ export const extractRecipe = createServerFn({ method: "POST" })
       servings: extracted.servings,
       ingredients: extracted.ingredients,
       instructions: extracted.instructions,
+      ingredient_sections: extracted.ingredient_sections,
+      instruction_sections: extracted.instruction_sections,
       tags: extracted.tags,
       image_url: imageUrl,
       image_prompt: extracted.food_style_image_prompt,
       source_url: data.url,
     };
   });
+
 
 export interface WebRecipeResult {
   title: string;
