@@ -8,6 +8,9 @@ import {
 import { useRecipes } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
 import { RecipeCard } from "@/components/RecipeCard";
+import { LangToggle } from "@/components/LangToggle";
+import { useT } from "@/lib/i18n";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
