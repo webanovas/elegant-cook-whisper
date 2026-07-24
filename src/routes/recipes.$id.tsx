@@ -6,6 +6,7 @@ import { useRecipeImage } from "@/lib/recipe-images";
 import { PortionScaler } from "@/components/PortionScaler";
 import { IngredientRow } from "@/components/IngredientRow";
 import { StarRating } from "@/components/StarRating";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
@@ -19,6 +20,7 @@ function RecipeDetail() {
   const { id } = Route.useParams();
   const recipe = useRecipe(id);
   const router = useRouter();
+  const t = useT();
   const [servings, setServings] = useState(recipe?.servings || 2);
   const imgSrc = useRecipeImage(recipe?.id ?? "", recipe?.image_url ?? null);
 
@@ -26,12 +28,10 @@ function RecipeDetail() {
     return (
       <div className="min-h-screen grid place-items-center px-6">
         <div className="text-center">
-          <p className="font-serif text-xl">Recipe not found</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            It may have been removed from this device.
-          </p>
+          <p className="font-serif text-xl">{t("recipe_not_found")}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("not_on_device")}</p>
           <Link to="/" className="mt-4 inline-block text-sm text-primary underline">
-            Back to cookbook
+            {t("back_cookbook")}
           </Link>
         </div>
       </div>
@@ -39,10 +39,13 @@ function RecipeDetail() {
   }
 
   function onDelete() {
-    if (!confirm("Delete this recipe from this device?")) return;
+    if (!confirm(t("confirm_delete_recipe"))) return;
     deleteRecipeLocal(recipe!.id);
     router.navigate({ to: "/" });
   }
+
+  const iSections = recipe.ingredient_sections;
+  const sSections = recipe.instruction_sections;
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-32">
@@ -70,7 +73,7 @@ function RecipeDetail() {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
           <Link
             to="/"
-            className="absolute top-4 left-4 bg-background/80 backdrop-blur-md size-9 rounded-full grid place-items-center text-sm shadow-sm"
+            className="absolute top-4 start-4 bg-background/80 backdrop-blur-md size-9 rounded-full grid place-items-center text-sm shadow-sm"
             aria-label="Back"
           >
             ←
@@ -97,7 +100,7 @@ function RecipeDetail() {
             </p>
           )}
           <div className="mb-6 flex items-center gap-3">
-            <span className="small-caps text-[10px] text-ink-soft">your rating</span>
+            <span className="small-caps text-[10px] text-ink-soft">{t("your_rating")}</span>
             <StarRating
               value={recipe.rating ?? 0}
               onChange={(v) => setRecipeRating(recipe.id, v)}
@@ -106,22 +109,43 @@ function RecipeDetail() {
           </div>
 
           <div className="flex justify-between py-6 border-y border-border">
-            <MetaCell label="Prep" value={recipe.prep_time || "—"} />
+            <MetaCell label={t("prep")} value={recipe.prep_time || "—"} />
             <div className="w-px bg-border" />
-            <MetaCell label="Cook" value={recipe.cook_time || "—"} />
+            <MetaCell label={t("cook")} value={recipe.cook_time || "—"} />
             <div className="w-px bg-border" />
             <div className="text-center">
               <span className="block text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
-                Serves
+                {t("serves")}
               </span>
               <PortionScaler servings={servings} onChange={setServings} />
             </div>
           </div>
 
           <section className="py-8">
-            <h3 className="font-serif text-xl mb-6">Ingredients</h3>
-            {recipe.ingredients.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic">No ingredients listed.</p>
+            <h3 className="font-serif text-xl mb-6">{t("ingredients")}</h3>
+            {iSections && iSections.length > 0 ? (
+              <div className="space-y-8">
+                {iSections.map((sec, si) => (
+                  <div key={si}>
+                    <p className="small-caps text-[11px] text-terracotta mb-3">
+                      {sec.title}
+                    </p>
+                    <ul className="space-y-4">
+                      {sec.items.map((ing, i) => (
+                        <IngredientRow
+                          key={i}
+                          ingredient={ing}
+                          originalServings={recipe.servings || 2}
+                          currentServings={servings}
+                          recipeTitle={recipe.title}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : recipe.ingredients.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">{t("no_ingredients")}</p>
             ) : (
               <ul className="space-y-4">
                 {recipe.ingredients.map((ing, i) => (
@@ -138,17 +162,29 @@ function RecipeDetail() {
           </section>
 
           <section className="pb-8">
-            <h3 className="font-serif text-xl mb-6">Method</h3>
-            <div className="space-y-8">
-              {recipe.instructions.map((step, i) => (
-                <div key={i} className="flex gap-4">
-                  <span className="font-serif text-primary/40 text-2xl leading-none italic tabular-nums shrink-0">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p className="text-sm leading-relaxed text-pretty">{step}</p>
-                </div>
-              ))}
-            </div>
+            <h3 className="font-serif text-xl mb-6">{t("method")}</h3>
+            {sSections && sSections.length > 0 ? (
+              <div className="space-y-10">
+                {sSections.map((sec, si) => (
+                  <div key={si}>
+                    <p className="small-caps text-[11px] text-terracotta mb-4">
+                      {sec.title}
+                    </p>
+                    <div className="space-y-8">
+                      {sec.steps.map((step, i) => (
+                        <StepLine key={i} n={i + 1} text={step} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {recipe.instructions.map((step, i) => (
+                  <StepLine key={i} n={i + 1} text={step} />
+                ))}
+              </div>
+            )}
           </section>
 
           <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground pt-6 border-t border-border">
@@ -159,7 +195,7 @@ function RecipeDetail() {
                 rel="noreferrer"
                 className="underline"
               >
-                Original source
+                {t("original_source")}
               </a>
             ) : (
               <span />
@@ -169,7 +205,7 @@ function RecipeDetail() {
               onClick={onDelete}
               className="text-destructive/70 hover:text-destructive"
             >
-              Delete
+              {t("delete")}
             </button>
           </div>
         </motion.div>
@@ -180,10 +216,24 @@ function RecipeDetail() {
             params={{ id: recipe.id }}
             className="w-full bg-foreground text-background py-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 shadow-xl ring-1 ring-foreground/10"
           >
-            Start Cook Mode
+            {t("start_cook")}
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function StepLine({ n, text }: { n: number; text: string }) {
+  return (
+    <div className="flex gap-4">
+      <span
+        dir="ltr"
+        className="font-serif text-primary/40 text-2xl leading-none italic tabular-nums shrink-0"
+      >
+        {String(n).padStart(2, "0")}
+      </span>
+      <p className="text-sm leading-relaxed text-pretty">{text}</p>
     </div>
   );
 }

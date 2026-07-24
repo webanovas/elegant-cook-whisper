@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 
 function format(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -7,6 +8,7 @@ function format(seconds: number): string {
 }
 
 export function CookTimer() {
+  const t = useT();
   const [seconds, setSeconds] = useState(5 * 60);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -35,12 +37,15 @@ export function CookTimer() {
   return (
     <div className="flex flex-col items-center gap-3">
       <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-        Timer
+        {t("timer")}
       </span>
-      <div className="font-serif text-4xl tracking-tight tabular-nums">
+      <div
+        dir="ltr"
+        className="font-serif text-4xl tracking-tight tabular-nums"
+      >
         {format(seconds)}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2" dir="ltr">
         <button
           type="button"
           onClick={() => adjust(-60)}
@@ -53,7 +58,7 @@ export function CookTimer() {
           onClick={() => setRunning((r) => !r)}
           className="text-[10px] font-medium uppercase tracking-widest text-primary border border-primary/30 px-3 py-1 rounded"
         >
-          {running ? "Pause" : "Start"}
+          {running ? t("pause") : t("start")}
         </button>
         <button
           type="button"

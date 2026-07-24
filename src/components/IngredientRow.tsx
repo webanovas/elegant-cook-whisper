@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { suggestSubstitute } from "@/lib/recipes.functions";
 import { scaleAmount } from "@/lib/scale";
 import type { Ingredient } from "@/lib/recipes.functions";
+import { useT } from "@/lib/i18n";
+
 
 export function IngredientRow({
   ingredient,
@@ -24,6 +26,8 @@ export function IngredientRow({
   );
   const [error, setError] = useState<string | null>(null);
   const suggest = useServerFn(suggestSubstitute);
+  const t = useT();
+
 
   const scaledAmount = scaleAmount(
     ingredient.amount ?? "",
@@ -64,12 +68,14 @@ export function IngredientRow({
             transition={{ duration: 0.3 }}
             className="flex items-baseline gap-2 flex-1"
           >
-            <span className="text-sm font-medium tabular-nums">
-              {scaledAmount}
-              {ingredient.unit ? ` ${ingredient.unit}` : ""}
-            </span>
-            <span className="text-sm text-foreground/70 text-pretty">
-              {ingredient.name}
+            <span className="flex items-baseline gap-2 flex-1">
+              <span className="text-sm font-medium tabular-nums" dir="ltr">
+                {scaledAmount}
+                {ingredient.unit ? ` ${ingredient.unit}` : ""}
+              </span>
+              <span className="text-sm text-foreground/70 text-pretty">
+                {ingredient.name}
+              </span>
             </span>
           </motion.span>
         </button>
@@ -78,9 +84,10 @@ export function IngredientRow({
           onClick={handleSuggest}
           className="text-[10px] font-medium uppercase tracking-wider text-primary opacity-60 group-hover:opacity-100 transition-opacity shrink-0"
         >
-          Sub
+          {t("sub")}
         </button>
       </div>
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -92,8 +99,9 @@ export function IngredientRow({
           >
             <div className="mt-3 bg-primary/5 border border-primary/10 rounded-lg p-3 text-sm">
               {loading && (
-                <p className="text-muted-foreground italic">Thinking of alternatives…</p>
+                <p className="text-muted-foreground italic">{t("substitute_loading")}</p>
               )}
+
               {error && <p className="text-destructive text-xs">{error}</p>}
               {alts?.map((a, i) => (
                 <div key={i} className={i > 0 ? "mt-2 pt-2 border-t border-primary/10" : ""}>
@@ -106,8 +114,9 @@ export function IngredientRow({
                 onClick={() => setOpen(false)}
                 className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground"
               >
-                Close
+                {t("close")}
               </button>
+
             </div>
           </motion.div>
         )}

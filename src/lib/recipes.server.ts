@@ -2,17 +2,34 @@
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1";
 
+export interface Ingredient {
+  amount: string;
+  unit: string;
+  name: string;
+}
+export interface IngredientSection {
+  title: string;
+  items: Ingredient[];
+}
+export interface InstructionSection {
+  title: string;
+  steps: string[];
+}
+
 export interface ExtractedRecipe {
   title: string;
   description: string;
   prep_time: string;
   cook_time: string;
   servings: number;
-  ingredients: Array<{ amount: string; unit: string; name: string }>;
+  ingredients: Ingredient[];
   instructions: string[];
+  ingredient_sections?: IngredientSection[];
+  instruction_sections?: InstructionSection[];
   tags: string[];
   food_style_image_prompt: string;
 }
+
 
 async function callGemini(prompt: string, model: string): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
@@ -114,15 +131,20 @@ export async function extractRecipeFromText(
   sourceUrl: string,
 ): Promise<ExtractedRecipe> {
   const prompt = `Extract the recipe from this content. Return ONLY a clean JSON object (no markdown fences, no commentary) with these exact keys:
-- title (string)
-- description (short overview, 1-2 sentences)
+- title (string) — keep it in its original language.
+- description (short overview, 1-2 sentences, in the recipe's original language)
 - prep_time (string like "15m")
 - cook_time (string like "30m")
 - servings (integer)
-- ingredients (array of objects with 'amount', 'unit', 'name'; empty strings if not specified)
-- instructions (array of clear step-by-step strings)
+- ingredients (array of objects with 'amount', 'unit', 'name'; empty strings if not specified) — FLAT list of every ingredient
+- instructions (array of clear step-by-step strings) — FLAT list of every step
 - tags (array of short tags like "Vegan", "Italian", "Quick")
-- food_style_image_prompt (a description for generating an aesthetic, editorial food photography image of this dish)
+- food_style_image_prompt (a description in English for generating an aesthetic, editorial food photography image of this dish)
+
+If — and ONLY if — the recipe has clearly labelled multiple components (e.g. "For the meatballs" + "For the sauce", cake + frosting, dough + filling), also return:
+- ingredient_sections: array of { title: string, items: [{amount, unit, name}, ...] }
+- instruction_sections: array of { title: string, steps: [string, ...] }
+Use the recipe's own section labels for 'title'. The flat 'ingredients' and 'instructions' arrays must still contain every item across all sections, in order — they are used for cook mode. Omit ingredient_sections / instruction_sections entirely when the recipe is a single component.
 
 Source URL: ${sourceUrl}
 
@@ -133,16 +155,39 @@ ${pageText}`;
   const cleaned = stripJsonFence(raw);
   try {
     const parsed = JSON.parse(cleaned) as ExtractedRecipe;
-    // Basic sanity
     if (!parsed.title) throw new Error("No title found");
+
+    const iSections = Array.isArray(parsed.ingredient_sections)
+      ? parsed.ingredient_sections.filter((s) => s && Array.isArray(s.items))
+      : undefined;
+    const sSections = Array.isArray(parsed.instruction_sections)
+      ? parsed.instruction_sections.filter((s) => s && Array.isArray(s.steps))
+      : undefined;
+
+    // Derive flat lists from sections if the model forgot them.
+    const flatIngredients =
+      Array.isArray(parsed.ingredients) && parsed.ingredients.length > 0
+        ? parsed.ingredients
+        : iSections
+          ? iSections.flatMap((s) => s.items)
+          : [];
+    const flatInstructions =
+      Array.isArray(parsed.instructions) && parsed.instructions.length > 0
+        ? parsed.instructions
+        : sSections
+          ? sSections.flatMap((s) => s.steps)
+          : [];
+
     return {
       title: parsed.title,
       description: parsed.description ?? "",
       prep_time: parsed.prep_time ?? "",
       cook_time: parsed.cook_time ?? "",
       servings: Number(parsed.servings) || 2,
-      ingredients: Array.isArray(parsed.ingredients) ? parsed.ingredients : [],
-      instructions: Array.isArray(parsed.instructions) ? parsed.instructions : [],
+      ingredients: flatIngredients,
+      instructions: flatInstructions,
+      ingredient_sections: iSections && iSections.length > 0 ? iSections : undefined,
+      instruction_sections: sSections && sSections.length > 0 ? sSections : undefined,
       tags: Array.isArray(parsed.tags) ? parsed.tags : [],
       food_style_image_prompt: parsed.food_style_image_prompt ?? parsed.title,
     };
@@ -151,6 +196,7 @@ ${pageText}`;
       `Could not parse recipe. The page may not contain a recipe. (${(e as Error).message})`,
     );
   }
+
 }
 
 export async function generateHeroImage(prompt: string): Promise<string | null> {

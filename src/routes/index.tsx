@@ -8,6 +8,9 @@ import {
 import { useRecipes } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
 import { RecipeCard } from "@/components/RecipeCard";
+import { LangToggle } from "@/components/LangToggle";
+import { useT } from "@/lib/i18n";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -28,14 +31,18 @@ function ShelfPage() {
   const books = useCookbooks();
   const recipes = useRecipes();
   const [creating, setCreating] = useState(false);
+  const t = useT();
 
   const countFor = (id: string) =>
     recipes.filter((r) => r.cookbook_id === id).length;
 
   return (
     <div className="min-h-screen py-8 sm:py-12 px-4">
+      <div className="max-w-[720px] mx-auto flex justify-end mb-2">
+        <LangToggle />
+      </div>
       <header className="text-center max-w-[520px] mx-auto">
-        <p className="small-caps text-[11px] text-terracotta">from the library of</p>
+        <p className="small-caps text-[11px] text-terracotta">{t("from_library")}</p>
         <h1 className="mt-2 font-serif text-[3rem] sm:text-[3.4rem] leading-[0.95] tracking-tight">
           <span className="italic">Gourmet</span>
           <br />
@@ -47,9 +54,10 @@ function ShelfPage() {
           <span className="flex-1 h-px bg-rule/60" />
         </div>
         <p className="mt-5 font-serif italic text-[15px] text-ink-soft leading-relaxed">
-          Choose a cookbook from the shelf, or bind a new one.
+          {t("choose_or_bind")}
         </p>
       </header>
+
 
       <div className="mt-10 max-w-[720px] mx-auto">
         <SearchAllRecipes recipes={recipes} books={books} />
