@@ -99,8 +99,9 @@ export function IngredientRow({
           >
             <div className="mt-3 bg-primary/5 border border-primary/10 rounded-lg p-3 text-sm">
               {loading && (
-                <p className="text-muted-foreground italic">{t("thinking_alts")}</p>
+                <p className="text-muted-foreground italic">{t("substitute_loading")}</p>
               )}
+
               {error && <p className="text-destructive text-xs">{error}</p>}
               {alts?.map((a, i) => (
                 <div key={i} className={i > 0 ? "mt-2 pt-2 border-t border-primary/10" : ""}>
