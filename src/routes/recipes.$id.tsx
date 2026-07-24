@@ -72,12 +72,14 @@ function RecipeDetail() {
 
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
           <Link
-            to="/"
+            to="/books/$id"
+            params={{ id: recipe.cookbook_id }}
             className="absolute top-4 start-4 bg-background/80 backdrop-blur-md size-9 rounded-full grid place-items-center text-sm shadow-sm"
             aria-label="Back"
           >
             ←
           </Link>
+
         </div>
 
         <motion.div
