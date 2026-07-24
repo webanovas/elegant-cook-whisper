@@ -40,9 +40,11 @@ function RecipeDetail() {
 
   function onDelete() {
     if (!confirm(t("confirm_delete_recipe"))) return;
+    const backTo = recipe!.cookbook_id;
     deleteRecipeLocal(recipe!.id);
-    router.navigate({ to: "/" });
+    router.navigate({ to: "/books/$id", params: { id: backTo } });
   }
+
 
   const iSections = recipe.ingredient_sections;
   const sSections = recipe.instruction_sections;
