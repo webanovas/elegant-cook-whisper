@@ -7,6 +7,16 @@ export interface Ingredient {
   name: string;
 }
 
+export interface IngredientSection {
+  title: string;
+  items: Ingredient[];
+}
+
+export interface InstructionSection {
+  title: string;
+  steps: string[];
+}
+
 export interface Recipe {
   id: string;
   title: string;
@@ -16,6 +26,8 @@ export interface Recipe {
   servings: number;
   ingredients: Ingredient[];
   instructions: string[];
+  ingredient_sections?: IngredientSection[];
+  instruction_sections?: InstructionSection[];
   tags: string[];
   image_url: string | null;
   image_prompt: string | null;
@@ -24,6 +36,7 @@ export interface Recipe {
   cookbook_id: string;
   rating?: number;
 }
+
 
 const KEY = "gourmet-notes:recipes:v1";
 const DEFAULT_BOOK_ID = "general";
