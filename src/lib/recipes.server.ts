@@ -82,6 +82,7 @@ export async function fetchPageText(url: string): Promise<string> {
   // Prefer Firecrawl (bypasses bot walls, returns clean markdown).
   const lovableKey = process.env.LOVABLE_API_KEY;
   const fcKey = process.env.FIRECRAWL_API_KEY;
+  let firecrawlError: string | null = null;
   if (lovableKey && fcKey) {
     try {
       const res = await fetch(
@@ -97,6 +98,7 @@ export async function fetchPageText(url: string): Promise<string> {
             url,
             formats: ["markdown"],
             onlyMainContent: true,
+            waitFor: 1500,
           }),
         },
       );
@@ -107,22 +109,47 @@ export async function fetchPageText(url: string): Promise<string> {
         };
         const md = json.markdown ?? json.data?.markdown;
         if (md && md.trim().length > 0) return md.slice(0, 18000);
+        firecrawlError = "Firecrawl returned an empty page.";
+      } else {
+        const body = await res.text().catch(() => "");
+        firecrawlError = `Firecrawl [${res.status}] ${body.slice(0, 200)}`;
+        console.error("Firecrawl scrape failed:", firecrawlError);
       }
-    } catch {
-      /* fall through to direct fetch */
+    } catch (e) {
+      firecrawlError = (e as Error).message;
+      console.error("Firecrawl scrape threw:", firecrawlError);
     }
   }
 
+  // Fallback: direct fetch with a real browser User-Agent (many sites 403 bots).
   const res = await fetch(url, {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (compatible; GourmetNotesBot/1.0; +https://gourmet-notes.app)",
-      Accept: "text/html,application/xhtml+xml",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9,he;q=0.8",
+      "Cache-Control": "no-cache",
     },
+    redirect: "follow",
   });
-  if (!res.ok) throw new Error(`Could not fetch that URL (status ${res.status}).`);
+  if (!res.ok) {
+    const suffix = firecrawlError ? ` (fallback also failed: ${firecrawlError})` : "";
+    if (res.status === 403 || res.status === 401 || res.status === 429) {
+      throw new Error(
+        `That site is blocking automated readers (status ${res.status}). Try a different recipe URL, or use the "search the web" tab instead.${suffix}`,
+      );
+    }
+    throw new Error(`Could not fetch that URL (status ${res.status}).${suffix}`);
+  }
   const html = await res.text();
-  return htmlToText(html);
+  const text = htmlToText(html);
+  if (text.length < 200) {
+    throw new Error(
+      "That page didn't have enough readable content to extract a recipe. Try the search-the-web tab.",
+    );
+  }
+  return text;
 }
 
 
