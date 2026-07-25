@@ -263,17 +263,28 @@ export async function generateHeroImage(prompt: string): Promise<string | null> 
 export async function suggestIngredientSubstitute(
   ingredient: string,
   recipeTitle: string,
-): Promise<Array<{ name: string; note: string }>> {
-  const prompt = `A user needs a substitute for "${ingredient}" in "${recipeTitle}". Suggest 2 practical, easy-to-find alternatives and briefly explain how each slightly changes the flavor or cooking. Return ONLY JSON (no fences) in this exact shape:
-{"alternatives":[{"name":"...","note":"..."},{"name":"...","note":"..."}]}`;
+  exclude: string[] = [],
+  count = 2,
+): Promise<Array<{ name: string; amount: string; note: string }>> {
+  const avoidLine =
+    exclude.length > 0
+      ? `Do NOT suggest any of these (already shown): ${exclude.join(", ")}. Offer different alternatives.`
+      : "";
+  const prompt = `A user needs a substitute for "${ingredient}" in "${recipeTitle}". Suggest ${count} practical, easy-to-find alternatives. For EACH alternative, tell the user (a) how much of the substitute to use relative to the original amount of "${ingredient}" (e.g. "same amount", "use 3/4 as much", "1:1 by weight", "double the amount") and (b) briefly how it changes the flavor or cooking. ${avoidLine}
+Reply in the same language as the ingredient name ("${ingredient}"). Return ONLY JSON (no fences, no commentary) in this exact shape:
+{"alternatives":[{"name":"...","amount":"...","note":"..."}]}`;
 
   const raw = await callGemini(prompt, "google/gemini-3.5-flash");
   const cleaned = stripJsonFence(raw);
   try {
     const parsed = JSON.parse(cleaned) as {
-      alternatives?: Array<{ name: string; note: string }>;
+      alternatives?: Array<{ name: string; amount?: string; note: string }>;
     };
-    return parsed.alternatives ?? [];
+    return (parsed.alternatives ?? []).map((a) => ({
+      name: a.name,
+      amount: a.amount ?? "",
+      note: a.note,
+    }));
   } catch {
     return [];
   }

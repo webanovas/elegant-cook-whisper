@@ -6,6 +6,7 @@ import { scaleAmount } from "@/lib/scale";
 import type { Ingredient } from "@/lib/recipes.functions";
 import { useT } from "@/lib/i18n";
 
+type Alt = { name: string; amount: string; note: string };
 
 export function IngredientRow({
   ingredient,
@@ -21,13 +22,11 @@ export function IngredientRow({
   const [checked, setChecked] = useState(false);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [alts, setAlts] = useState<Array<{ name: string; note: string }> | null>(
-    null,
-  );
+  const [moreLoading, setMoreLoading] = useState(false);
+  const [alts, setAlts] = useState<Alt[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const suggest = useServerFn(suggestSubstitute);
   const t = useT();
-
 
   const scaledAmount = scaleAmount(
     ingredient.amount ?? "",
@@ -35,21 +34,32 @@ export function IngredientRow({
     currentServings,
   );
 
-  async function handleSuggest() {
-    if (!open) setOpen(true);
-    if (alts || loading) return;
-    setLoading(true);
+  async function fetchAlts(mode: "initial" | "more") {
+    if (mode === "initial") setLoading(true);
+    else setMoreLoading(true);
     setError(null);
     try {
       const res = await suggest({
-        data: { ingredient: ingredient.name, recipeTitle },
+        data: {
+          ingredient: ingredient.name,
+          recipeTitle,
+          exclude: mode === "more" ? (alts ?? []).map((a) => a.name) : [],
+          count: mode === "more" ? 2 : 2,
+        },
       });
-      setAlts(res.alternatives);
+      setAlts((prev) => (mode === "more" && prev ? [...prev, ...res.alternatives] : res.alternatives));
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setLoading(false);
+      setMoreLoading(false);
     }
+  }
+
+  async function handleSuggest() {
+    if (!open) setOpen(true);
+    if (alts || loading) return;
+    await fetchAlts("initial");
   }
 
   return (
@@ -105,18 +115,47 @@ export function IngredientRow({
               {error && <p className="text-destructive text-xs">{error}</p>}
               {alts?.map((a, i) => (
                 <div key={i} className={i > 0 ? "mt-2 pt-2 border-t border-primary/10" : ""}>
-                  <p className="font-medium">{a.name}</p>
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="font-medium">{a.name}</p>
+                    {a.amount && (
+                      <span className="text-[10px] uppercase tracking-wider text-terracotta font-semibold shrink-0">
+                        {a.amount}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{a.note}</p>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground"
-              >
-                {t("close")}
-              </button>
 
+              {alts && alts.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-primary/10 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fetchAlts("more")}
+                    disabled={moreLoading}
+                    className="text-[10px] uppercase tracking-widest text-primary font-semibold disabled:opacity-50"
+                  >
+                    {moreLoading ? t("substitute_loading") : `+ ${t("more_subs")}`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="text-[10px] uppercase tracking-widest text-muted-foreground"
+                  >
+                    {t("close")}
+                  </button>
+                </div>
+              )}
+
+              {!alts && !loading && (
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground"
+                >
+                  {t("close")}
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -124,3 +163,4 @@ export function IngredientRow({
     </li>
   );
 }
+

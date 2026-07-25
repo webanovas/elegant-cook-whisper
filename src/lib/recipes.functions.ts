@@ -163,7 +163,12 @@ export const searchRecipesOnWeb = createServerFn({ method: "POST" })
 export const suggestSubstitute = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
-      .object({ ingredient: z.string().min(1), recipeTitle: z.string().min(1) })
+      .object({
+        ingredient: z.string().min(1),
+        recipeTitle: z.string().min(1),
+        exclude: z.array(z.string()).optional(),
+        count: z.number().int().min(1).max(4).optional(),
+      })
       .parse(input),
   )
   .handler(async ({ data }) => {
@@ -171,6 +176,8 @@ export const suggestSubstitute = createServerFn({ method: "POST" })
     const alternatives = await suggestIngredientSubstitute(
       data.ingredient,
       data.recipeTitle,
+      data.exclude ?? [],
+      data.count ?? 2,
     );
     return { alternatives };
   });
