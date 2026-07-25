@@ -119,6 +119,7 @@ export const filterRecipesByVibe = createServerFn({ method: "POST" })
       .object({
         vibe: z.string().trim().min(2).max(200),
         recipes: z.array(VibeRecipeSchema).max(300),
+        lang: z.enum(["en", "he"]).optional(),
       })
       .parse(input),
   )
@@ -133,7 +134,14 @@ export const filterRecipesByVibe = createServerFn({ method: "POST" })
       )
       .join("\n");
 
+    const langLine =
+      data.lang === "he"
+        ? `Respond in Hebrew (write the "note" field in natural Hebrew).`
+        : `Respond in English.`;
+
     const prompt = `You help someone pick a recipe from their private cookbook to match a mood.
+
+${langLine}
 
 Vibe / request: "${data.vibe}"
 
@@ -144,6 +152,7 @@ Pick up to 12 recipes that best match the vibe, ordered from best to worst fit. 
 
 Return ONLY strict JSON, no fences:
 {"ids": ["<id>", ...], "note": "<one short warm sentence explaining the pick, max 90 chars>"}`;
+
 
     try {
       const res = await fetch(`${GATEWAY_URL}/chat/completions`, {

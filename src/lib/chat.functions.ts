@@ -36,6 +36,7 @@ export const chatWithGemini = createServerFn({ method: "POST" })
       .object({
         messages: z.array(MessageSchema).min(1).max(30),
         library: z.array(LibraryItemSchema).max(200).optional(),
+        lang: z.enum(["en", "he"]).optional(),
       })
       .parse(input),
   )
@@ -59,7 +60,12 @@ export const chatWithGemini = createServerFn({ method: "POST" })
           .join("\n")
       : "(the cookbook is empty)";
 
-    const system = `You are the resident cook at Gourmet Notes, a vintage cookbook. Speak warmly, briefly, with a touch of old-world charm. Two things you do:
+    const langLine =
+      data.lang === "he"
+        ? `Always reply in natural Hebrew. Never mix English words unless it's a proper name.`
+        : `Always reply in English.`;
+
+    const system = `You are the resident cook at Gourmet Notes, a vintage cookbook. Speak warmly, briefly, with a touch of old-world charm. ${langLine} Two things you do:
 
 1) If any saved recipe fits the user's craving, recommend it. Reference it inline using the exact token [[RECIPE:<id>]] on its own line right after your sentence about it. Only use ids from the list below — never invent ids.
 2) If nothing in the library fits, suggest 2–4 fresh dish names they could cook, each on its own line prefixed with "•". Keep descriptions to one short phrase.
@@ -68,6 +74,7 @@ Never mix code fences or JSON in your reply. Keep total length under 120 words.
 
 Saved recipes:
 ${libraryText}`;
+
 
     const res = await fetch(`${GATEWAY_URL}/chat/completions`, {
       method: "POST",
