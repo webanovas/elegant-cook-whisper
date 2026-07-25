@@ -41,7 +41,7 @@ function LibraryPage() {
 
       <ProudHeader count={recipes.length} />
 
-      <div className="mt-10 max-w-[760px] mx-auto">
+      <div className="mt-10 max-w-[1100px] mx-auto">
         <ImportCard />
 
         <FilterableGallery recipes={recipes} />
