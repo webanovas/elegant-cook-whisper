@@ -96,8 +96,17 @@ function RecipeDetail() {
   const sSections = recipe.instruction_sections;
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-32">
+    <div className={`min-h-screen bg-background text-foreground pb-32 ${cookMode ? "cook-mode-on text-[1.08rem]" : ""}`}>
       <div className="max-w-[440px] mx-auto relative">
+        {cookMode && (
+          <button
+            type="button"
+            onClick={() => setCookMode(false)}
+            className="fixed top-3 end-3 z-50 rounded-full bg-foreground/90 text-background text-xs font-medium px-4 py-2 shadow-lg backdrop-blur-md hover:bg-foreground transition-colors"
+          >
+            × {t("exit_cook")}
+          </button>
+        )}
         {/* Hero */}
         <div className="relative">
           <div className="w-full aspect-[4/5] bg-muted overflow-hidden">
