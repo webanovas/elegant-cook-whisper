@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { chatWithGemini, type RecipeSuggestion } from "@/lib/chat.functions";
 import { useRecipes } from "@/lib/recipes-store";
+import { useT, useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -25,11 +26,6 @@ type UIMessage = {
   suggestions?: RecipeSuggestion[];
 };
 
-const OPENING: UIMessage = {
-  role: "assistant",
-  content:
-    "Good day. Tell me what you're in the mood for — a quick supper, something from the pantry, a dinner-party centerpiece — and I'll find a recipe from your book or suggest a new dish to try.",
-};
 
 function ChatPage() {
   const send = useServerFn(chatWithGemini);
