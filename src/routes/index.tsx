@@ -6,7 +6,7 @@ import { useRecipes, saveRecipe, type Recipe } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
 import { RecipeCard } from "@/components/RecipeCard";
 import { LangToggle } from "@/components/LangToggle";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 import {
   extractRecipe,
   searchRecipesOnWeb,
@@ -48,7 +48,6 @@ function LibraryPage() {
 
         <FilterableGallery recipes={recipes} />
 
-
         <div className="mt-14 text-center">
           <Link
             to="/chat"
@@ -69,6 +68,7 @@ function LibraryPage() {
 /* ------------------------- proud header w/ counter ------------------------ */
 
 function ProudHeader({ count }: { count: number }) {
+  const t = useT();
   const tier =
     count === 0
       ? "empty"
@@ -82,22 +82,20 @@ function ProudHeader({ count }: { count: number }) {
               ? "abundant"
               : "legendary";
 
-  const tierLine: Record<typeof tier, string> = {
-    empty: "your library is waiting for its first page",
-    seedling: "a young library, promising",
-    growing: "a proper little collection",
-    flourishing: "a flourishing kitchen library",
-    abundant: "an abundant, well-loved cookbook",
-    legendary: "a legendary personal library ✦",
+  const tierKey: Record<typeof tier, string> = {
+    empty: "tier_empty",
+    seedling: "tier_seedling",
+    growing: "tier_growing",
+    flourishing: "tier_flourishing",
+    abundant: "tier_abundant",
+    legendary: "tier_legendary",
   };
 
   return (
     <header className="text-center max-w-[560px] mx-auto">
-      <p className="small-caps text-[11px] text-terracotta">Gourmet Notes</p>
-      <h1 className="mt-2 font-serif text-[3rem] sm:text-[3.4rem] leading-[0.95] tracking-tight">
-        <span className="italic">Your</span>
-        <br />
-        Library
+      <p className="small-caps text-[11px] text-terracotta">{t("gourmet_notes")}</p>
+      <h1 className="mt-2 font-serif text-[3rem] sm:text-[3.4rem] leading-[0.95] tracking-tight italic">
+        {t("your_library")}
       </h1>
       <div className="mx-auto mt-5 flex items-center gap-3 max-w-[240px]">
         <span className="flex-1 h-px bg-rule/60" />
@@ -120,11 +118,11 @@ function ProudHeader({ count }: { count: number }) {
             {count}
           </span>
           <span className="small-caps text-[11px] text-ink-soft">
-            {count === 1 ? "recipe" : "recipes"}
+            {count === 1 ? t("recipe_word") : t("recipes_word")}
           </span>
         </div>
         <p className="mt-3 font-serif italic text-[14px] text-ink-soft">
-          {tierLine[tier]}
+          {t(tierKey[tier])}
         </p>
       </motion.div>
     </header>
@@ -135,6 +133,7 @@ function ProudHeader({ count }: { count: number }) {
 
 function ImportCard() {
   const router = useRouter();
+  const t = useT();
   const extract = useServerFn(extractRecipe);
   const search = useServerFn(searchRecipesOnWeb);
   const [mode, setMode] = useState<"url" | "search">("url");
@@ -195,7 +194,7 @@ function ImportCard() {
         aria-expanded={open}
       >
         <span className="small-caps text-[11px] text-terracotta">
-          + add a new recipe
+          {t("add_new_recipe")}
         </span>
         <span
           className={`text-terracotta text-xs transition-transform duration-300 ${
@@ -210,11 +209,11 @@ function ImportCard() {
         <div className="border-t border-rule/40 px-4 py-4 sm:px-5">
           <div className="flex items-center justify-center gap-2">
             <ModeTab active={mode === "url"} onClick={() => setMode("url")}>
-              from a URL
+              {t("from_url")}
             </ModeTab>
             <span className="text-ink-soft/40 text-[10px]">·</span>
             <ModeTab active={mode === "search"} onClick={() => setMode("search")}>
-              search the web
+              {t("search_web")}
             </ModeTab>
           </div>
 
@@ -225,7 +224,7 @@ function ImportCard() {
                 required
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="Paste any recipe URL…"
+                placeholder={t("paste_url_ph")}
                 className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
                 disabled={loading}
               />
@@ -234,7 +233,7 @@ function ImportCard() {
                 disabled={loading}
                 className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
               >
-                {loading ? "Reading…" : "Clip"}
+                {loading ? t("reading") : t("clip")}
               </button>
             </form>
           ) : (
@@ -245,7 +244,7 @@ function ImportCard() {
                   required
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="e.g. Neapolitan pizza dough"
+                  placeholder={t("search_ph_web")}
                   className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
                   disabled={searching || loading}
                 />
@@ -254,7 +253,7 @@ function ImportCard() {
                   disabled={searching || loading}
                   className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
                 >
-                  {searching ? "Searching…" : "Search"}
+                  {searching ? t("searching") : t("search")}
                 </button>
               </form>
 
@@ -309,7 +308,7 @@ function ImportCard() {
                               )}
                             </div>
                             <span className="small-caps text-[10px] text-terracotta shrink-0 mt-1">
-                              {isImporting ? "clipping…" : "clip →"}
+                              {isImporting ? t("clipping") : t("clip_arrow")}
                             </span>
                           </button>
                         </li>
@@ -319,7 +318,7 @@ function ImportCard() {
               )}
               {results && results.length === 0 && (
                 <p className="mt-3 text-xs text-ink-soft italic text-center">
-                  No recipes found. Try a different search.
+                  {t("no_web_results")}
                 </p>
               )}
             </>
@@ -332,7 +331,7 @@ function ImportCard() {
           )}
           {loading && (
             <p className="mt-2 text-xs text-ink-soft italic text-center">
-              Transcribing to a fresh page & plating a picture…
+              {t("transcribing")}
             </p>
           )}
         </div>
@@ -382,17 +381,19 @@ function parsePrepMinutes(s: string | null): number | null {
   return total > 0 ? total : null;
 }
 
-const PREP_BUCKETS = [
-  { id: "all", label: "any length", test: (_: number | null) => true },
-  { id: "quick", label: "under 15 min", test: (n: number | null) => n !== null && n < 15 },
-  { id: "medium", label: "15 – 30 min", test: (n: number | null) => n !== null && n >= 15 && n <= 30 },
-  { id: "long", label: "30 – 60 min", test: (n: number | null) => n !== null && n > 30 && n <= 60 },
-  { id: "xlong", label: "over 1 hour", test: (n: number | null) => n !== null && n > 60 },
-] as const;
+/** Slider stop → max prep minutes (0 = no filter). */
+const QUICKNESS_STOPS = [0, 15, 30, 45, 60, 90] as const;
 
-type SortKey = "surprise" | "quick" | "top" | "newest" | "az";
+function quicknessLabel(stop: number, t: (k: string) => string): string {
+  if (stop === 0) return t("quickness_any");
+  if (stop === 15) return t("quickness_15");
+  if (stop === 30) return t("quickness_30");
+  if (stop === 45) return t("quickness_45");
+  if (stop === 60) return t("quickness_60");
+  return t("quickness_90");
+}
 
-/** Stable-ish random shuffle seeded by a session key so it doesn't reshuffle on every render. */
+/** Stable-ish random shuffle seeded by a session key. */
 function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
   const out = [...arr];
   let s = seed || 1;
@@ -405,23 +406,25 @@ function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
 }
 
 function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
+  const t = useT();
+  const lang = useLang();
   const askVibe = useServerFn(filterRecipesByVibe);
+
+  // 0 = any, else index into QUICKNESS_STOPS
+  const [quickIdx, setQuickIdx] = useState(0);
   const [minRating, setMinRating] = useState(0);
-  const [dishType, setDishType] = useState<string>("all");
-  const [prepBucket, setPrepBucket] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortKey>("surprise");
   const [shuffleSeed, setShuffleSeed] = useState(() => Math.floor(Math.random() * 1e6));
   const [vibe, setVibe] = useState("");
   const [vibeLoading, setVibeLoading] = useState(false);
   const [vibeError, setVibeError] = useState<string | null>(null);
   const [vibeIds, setVibeIds] = useState<string[] | null>(null);
   const [vibeNote, setVibeNote] = useState<string | null>(null);
+  // when filters are active and user asks the cook, we hold their vibe
+  // string here and ask whether to respect the filters before running.
+  const [pendingVibe, setPendingVibe] = useState<string | null>(null);
 
-  const allTags = useMemo(() => {
-    const set = new Set<string>();
-    recipes.forEach((r) => r.tags.forEach((t) => t && set.add(t)));
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [recipes]);
+  const maxPrep = QUICKNESS_STOPS[quickIdx];
+  const anyFilterActive = quickIdx > 0 || minRating > 0;
 
   useEffect(() => {
     if (vibeIds && vibeIds.some((id) => !recipes.find((r) => r.id === id))) {
@@ -431,47 +434,50 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipes.length]);
 
+  const passesFilters = (r: Recipe): boolean => {
+    if (minRating > 0 && (r.rating ?? 0) < minRating) return false;
+    if (maxPrep > 0) {
+      const n = parsePrepMinutes(r.prep_time);
+      if (n === null || n > maxPrep) return false;
+    }
+    return true;
+  };
+
   const filtered = useMemo(() => {
-    const bucket = PREP_BUCKETS.find((b) => b.id === prepBucket) ?? PREP_BUCKETS[0];
-    const base = recipes.filter((r) => {
-      if (minRating > 0 && (r.rating ?? 0) < minRating) return false;
-      if (dishType !== "all" && !r.tags.some((t) => t.toLowerCase() === dishType.toLowerCase()))
-        return false;
-      if (prepBucket !== "all" && !bucket.test(parsePrepMinutes(r.prep_time))) return false;
-      return true;
-    });
+    const base = recipes.filter(passesFilters);
 
     if (vibeIds && vibeIds.length > 0) {
       const map = new Map(base.map((r) => [r.id, r]));
-      return vibeIds.map((id) => map.get(id)).filter(Boolean) as Recipe[];
+      const inFilters = vibeIds.map((id) => map.get(id)).filter(Boolean) as Recipe[];
+      // If the vibe was resolved against the full library (ignore filters),
+      // we still surface those picks even when outside current filters.
+      if (inFilters.length > 0) return inFilters;
+      const full = new Map(recipes.map((r) => [r.id, r]));
+      return vibeIds.map((id) => full.get(id)).filter(Boolean) as Recipe[];
     }
 
-    const sorted = [...base];
-    if (sortBy === "top") {
-      sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-    } else if (sortBy === "quick") {
-      sorted.sort((a, b) => {
+    // Default: quick-first when a quickness cap is set, else random surprise.
+    if (quickIdx > 0) {
+      return [...base].sort((a, b) => {
         const am = parsePrepMinutes(a.prep_time) ?? Number.POSITIVE_INFINITY;
         const bm = parsePrepMinutes(b.prep_time) ?? Number.POSITIVE_INFINITY;
         return am - bm;
       });
-    } else if (sortBy === "az") {
-      sorted.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sortBy === "newest") {
-      sorted.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
-    } else {
-      return shuffleWithSeed(sorted, shuffleSeed);
     }
-    return sorted;
-  }, [recipes, minRating, dishType, prepBucket, sortBy, shuffleSeed, vibeIds]);
+    if (minRating > 0) {
+      return [...base].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    }
+    return shuffleWithSeed(base, shuffleSeed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipes, quickIdx, minRating, shuffleSeed, vibeIds]);
 
-  async function runVibe(e: React.FormEvent) {
-    e.preventDefault();
-    if (!vibe.trim() || vibeLoading) return;
+  async function runVibe(vibeText: string, respectFilters: boolean) {
     setVibeLoading(true);
     setVibeError(null);
+    setPendingVibe(null);
     try {
-      const compact = recipes.map((r) => ({
+      const pool = respectFilters ? recipes.filter(passesFilters) : recipes;
+      const compact = pool.map((r) => ({
         id: r.id,
         title: r.title,
         description: r.description,
@@ -480,9 +486,11 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
         cook_time: r.cook_time,
         rating: r.rating ?? null,
       }));
-      const res = await askVibe({ data: { vibe: vibe.trim(), recipes: compact } });
+      const res = await askVibe({
+        data: { vibe: vibeText, recipes: compact, lang },
+      });
       if (res.ids.length === 0) {
-        setVibeError("The cook couldn't match that mood — try different words.");
+        setVibeError(t("vibe_no_match"));
         setVibeIds(null);
         setVibeNote(null);
       } else {
@@ -496,6 +504,17 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     }
   }
 
+  function onSubmitVibe(e: React.FormEvent) {
+    e.preventDefault();
+    const text = vibe.trim();
+    if (!text || vibeLoading) return;
+    if (anyFilterActive) {
+      setPendingVibe(text);
+      return;
+    }
+    void runVibe(text, false);
+  }
+
   function clearVibe() {
     setVibeIds(null);
     setVibeNote(null);
@@ -504,81 +523,68 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   }
 
   function reset() {
+    setQuickIdx(0);
     setMinRating(0);
-    setDishType("all");
-    setPrepBucket("all");
-    setSortBy("surprise");
     setShuffleSeed(Math.floor(Math.random() * 1e6));
     clearVibe();
   }
 
   const hasRecipes = recipes.length > 0;
-  const anyFilterActive =
-    minRating > 0 || dishType !== "all" || prepBucket !== "all" || sortBy !== "surprise" || !!vibeIds;
-
-  const quicknessChips: { id: SortKey | "bucket-quick"; label: string; active: boolean; onClick: () => void }[] = [
-    { id: "surprise", label: "any speed", active: sortBy === "surprise" && prepBucket === "all", onClick: () => { setSortBy("surprise"); setPrepBucket("all"); } },
-    { id: "quick", label: "under 15 min", active: prepBucket === "quick", onClick: () => setPrepBucket(prepBucket === "quick" ? "all" : "quick") },
-    { id: "bucket-quick", label: "15 – 30 min", active: prepBucket === "medium", onClick: () => setPrepBucket(prepBucket === "medium" ? "all" : "medium") },
-    { id: "newest", label: "30 – 60 min", active: prepBucket === "long", onClick: () => setPrepBucket(prepBucket === "long" ? "all" : "long") },
-    { id: "top", label: "quickest first", active: sortBy === "quick", onClick: () => setSortBy(sortBy === "quick" ? "surprise" : "quick") },
-  ];
 
   return (
     <section>
       {hasRecipes && (
         <div className="mt-4 grid gap-4 md:grid-cols-[1fr_320px] items-start">
-          {/* Chip filters */}
-          <div className="paper-page rounded-[3px] px-4 py-4 sm:px-5 space-y-4">
-            <FilterRow label="quickness">
-              {quicknessChips.map((c) => (
-                <Chip key={c.id} active={c.active} onClick={c.onClick}>{c.label}</Chip>
-              ))}
-            </FilterRow>
+          {/* Slider filters */}
+          <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-5">
+            <SliderRow
+              label={t("quickness")}
+              value={quickIdx}
+              max={QUICKNESS_STOPS.length - 1}
+              display={quicknessLabel(maxPrep, t)}
+              onChange={setQuickIdx}
+            />
 
-            <FilterRow label="rating">
-              <Chip active={minRating === 0} onClick={() => setMinRating(0)}>any</Chip>
-              {[3, 4, 5].map((n) => (
-                <Chip key={n} active={minRating === n} onClick={() => setMinRating(minRating === n ? 0 : n)}>
-                  {"★".repeat(n)}{n < 5 ? "+" : ""}
-                </Chip>
-              ))}
-              <Chip active={sortBy === "top"} onClick={() => setSortBy(sortBy === "top" ? "surprise" : "top")}>
-                top rated first
-              </Chip>
-            </FilterRow>
-
-            {allTags.length > 0 && (
-              <FilterRow label="genre">
-                <Chip active={dishType === "all"} onClick={() => setDishType("all")}>all</Chip>
-                {allTags.slice(0, 20).map((tg) => (
-                  <Chip key={tg} active={dishType === tg} onClick={() => setDishType(dishType === tg ? "all" : tg)}>
-                    {tg}
-                  </Chip>
-                ))}
-              </FilterRow>
-            )}
+            <SliderRow
+              label={t("rating_label")}
+              value={minRating}
+              max={5}
+              display={
+                minRating === 0
+                  ? t("rating_any")
+                  : t("rating_min").replace("{n}", String(minRating))
+              }
+              onChange={setMinRating}
+              renderTicks={(v) => (
+                <span className="text-terracotta tabular-nums text-[13px]">
+                  {"★".repeat(v)}
+                  <span className="text-ink/20">{"★".repeat(5 - v)}</span>
+                </span>
+              )}
+            />
 
             <div className="flex items-center justify-between gap-3 pt-1">
               <span className="small-caps text-[10px] text-ink-soft">
-                {filtered.length} of {recipes.length}
-                {sortBy === "surprise" && !vibeIds && (
+                <span dir="ltr">
+                  {filtered.length} {t("of_total")} {recipes.length}
+                </span>
+                {!anyFilterActive && !vibeIds && (
                   <button
                     type="button"
                     onClick={() => setShuffleSeed(Math.floor(Math.random() * 1e6))}
-                    className="ml-3 text-terracotta hover:underline"
+                    className="ms-3 text-terracotta hover:underline"
                   >
-                    ↻ reshuffle
+                    {t("reshuffle")}
                   </button>
                 )}
               </span>
-              {anyFilterActive && (
+              {(anyFilterActive || vibeIds) && (
                 <button
                   type="button"
                   onClick={reset}
                   className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
                 >
-                  reset all
+                  {t("reset_all")}
                 </button>
               )}
             </div>
@@ -587,25 +593,57 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
           {/* Ask the cook */}
           <div className="paper-page rounded-[3px] px-4 py-4 sm:px-5">
             <p className="small-caps text-[10px] text-terracotta">
-              ✦ ask the cook to narrow it down
+              {t("ask_narrow")}
             </p>
-            <form onSubmit={runVibe} className="mt-2 flex gap-2">
+            <form onSubmit={onSubmitVibe} className="mt-2 flex gap-2">
               <input
                 type="text"
                 value={vibe}
                 onChange={(e) => setVibe(e.target.value)}
-                placeholder="cozy rainy night · impress my parents"
+                placeholder={t("ask_placeholder_vibe")}
                 className="flex-1 min-w-0 bg-transparent border-b border-rule/60 py-2 text-sm font-serif italic outline-none focus:border-terracotta"
                 disabled={vibeLoading}
               />
               <button
                 type="submit"
-                disabled={vibeLoading || !vibe.trim()}
+                disabled={vibeLoading || !vibe.trim() || !!pendingVibe}
                 className="small-caps text-[10px] text-terracotta border border-terracotta/40 rounded-full px-3 py-1 hover:bg-terracotta hover:text-paper transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-terracotta"
               >
-                {vibeLoading ? "thinking…" : "match"}
+                {vibeLoading ? t("thinking") : t("match_btn")}
               </button>
             </form>
+
+            {pendingVibe && (
+              <div className="mt-3 border-t border-rule/40 pt-3">
+                <p className="text-[12px] font-serif italic text-ink">
+                  {t("filters_active_q")}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => runVibe(pendingVibe, true)}
+                    className="small-caps text-[10px] text-paper bg-terracotta rounded-full px-3 py-1 hover:opacity-90 transition-opacity"
+                  >
+                    {t("keep_filters")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => runVibe(pendingVibe, false)}
+                    className="small-caps text-[10px] text-terracotta border border-terracotta/40 rounded-full px-3 py-1 hover:bg-terracotta hover:text-paper transition-colors"
+                  >
+                    {t("ignore_filters")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingVibe(null)}
+                    className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta px-2 py-1"
+                  >
+                    {t("cancel")}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {vibeError && (
               <p className="mt-2 text-[11px] text-destructive italic">{vibeError}</p>
             )}
@@ -619,7 +657,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
                   onClick={clearVibe}
                   className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta shrink-0"
                 >
-                  clear
+                  {t("clear")}
                 </button>
               </div>
             )}
@@ -632,15 +670,13 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
         {!hasRecipes ? (
           <div className="text-center py-16 border border-dashed border-rule/60 rounded-md bg-paper-deep/30">
             <p className="font-serif italic text-xl text-ink">
-              The first page of your library.
+              {t("first_page_lib")}
             </p>
-            <p className="mt-2 text-sm text-ink-soft">
-              Clip a recipe above to begin.
-            </p>
+            <p className="mt-2 text-sm text-ink-soft">{t("clip_hint_lib")}</p>
           </div>
         ) : filtered.length === 0 ? (
           <p className="text-center py-14 text-sm text-ink-soft italic">
-            no recipes match these filters
+            {t("no_match_short")}
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-5 gap-y-8">
@@ -654,38 +690,46 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   );
 }
 
-function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+function SliderRow({
+  label,
+  value,
+  max,
+  display,
+  onChange,
+  renderTicks,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  display: string;
+  onChange: (v: number) => void;
+  renderTicks?: (v: number) => React.ReactNode;
+}) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="small-caps text-[10px] text-ink-soft w-full sm:w-[70px] shrink-0">
-        {label}
-      </span>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+    <div>
+      <div className="flex items-baseline justify-between gap-3 mb-2">
+        <span className="small-caps text-[10px] text-ink-soft">{label}</span>
+        <span className="font-serif italic text-[13px] text-ink">
+          {renderTicks ? renderTicks(value) : display}
+        </span>
+      </div>
+      {/* Keep the slider itself in LTR so the "quicker/less strict" end
+          stays on the left even under RTL, matching the value labels. */}
+      <input
+        dir="ltr"
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-terracotta cursor-pointer"
+      />
+      {renderTicks && (
+        <p className="mt-1 text-[11px] text-ink-soft font-serif italic">
+          {display}
+        </p>
+      )}
     </div>
   );
 }
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`small-caps text-[10px] px-2.5 py-1 rounded-full border transition-colors ${
-        active
-          ? "bg-terracotta text-paper border-terracotta"
-          : "bg-transparent text-ink-soft border-rule/60 hover:border-terracotta hover:text-terracotta"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
