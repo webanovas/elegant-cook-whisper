@@ -40,9 +40,8 @@ function RecipeDetail() {
 
   function onDelete() {
     if (!confirm(t("confirm_delete_recipe"))) return;
-    const backTo = recipe!.cookbook_id;
     deleteRecipeLocal(recipe!.id);
-    router.navigate({ to: "/books/$id", params: { id: backTo } });
+    router.navigate({ to: "/" });
   }
 
 
@@ -74,8 +73,7 @@ function RecipeDetail() {
 
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
           <Link
-            to="/books/$id"
-            params={{ id: recipe.cookbook_id }}
+            to="/"
             className="absolute top-4 start-4 bg-background/80 backdrop-blur-md size-9 rounded-full grid place-items-center text-sm shadow-sm"
             aria-label="Back"
           >
