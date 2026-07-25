@@ -60,6 +60,51 @@ export const extractRecipe = createServerFn({ method: "POST" })
       image_prompt: extracted.food_style_image_prompt,
       source_url: data.url,
     };
+});
+
+export interface ScannedRecipeResult extends ExtractedRecipe {
+  confidence: number;
+  warnings: string[];
+}
+
+export const scanRecipeFromImages = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        images: z
+          .array(z.string().min(20))
+          .min(1, "Please add at least one photo")
+          .max(6),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<ScannedRecipeResult> => {
+    const { extractRecipeFromImages, generateHeroImage } = await import(
+      "./recipes.server"
+    );
+    const scanned = await extractRecipeFromImages(data.images);
+    // Only spend credits on a hero image when the transcription seems trustworthy.
+    const imageUrl =
+      scanned.confidence >= 0.55
+        ? await generateHeroImage(scanned.food_style_image_prompt)
+        : null;
+    return {
+      title: scanned.title,
+      description: scanned.description,
+      prep_time: scanned.prep_time,
+      cook_time: scanned.cook_time,
+      servings: scanned.servings,
+      ingredients: scanned.ingredients,
+      instructions: scanned.instructions,
+      ingredient_sections: scanned.ingredient_sections,
+      instruction_sections: scanned.instruction_sections,
+      tags: scanned.tags,
+      image_url: imageUrl,
+      image_prompt: scanned.food_style_image_prompt,
+      source_url: null,
+      confidence: scanned.confidence,
+      warnings: scanned.warnings,
+    };
   });
 
 
