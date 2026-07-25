@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { deleteRecipeLocal, setRecipeRating, useRecipe } from "@/lib/recipes-store";
 import { useRecipeImage } from "@/lib/recipe-images";
@@ -8,6 +8,8 @@ import { IngredientRow } from "@/components/IngredientRow";
 import { StarRating } from "@/components/StarRating";
 import { useT } from "@/lib/i18n";
 import { TimedText } from "@/components/TimedText";
+import { addGroceryItems } from "@/lib/grocery-store";
+import { scaleAmount } from "@/lib/scale";
 
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
@@ -23,7 +25,31 @@ function RecipeDetail() {
   const router = useRouter();
   const t = useT();
   const [servings, setServings] = useState(recipe?.servings || 2);
+  const [addedAll, setAddedAll] = useState(false);
+  const [scanNotice, setScanNotice] = useState<
+    { confidence: number; warnings: string[] } | null
+  >(null);
   const imgSrc = useRecipeImage(recipe?.id ?? "", recipe?.image_url ?? null);
+
+  useEffect(() => {
+    if (!recipe) return;
+    try {
+      const raw = window.sessionStorage.getItem(`gn:scan-notice:${recipe.id}`);
+      if (raw) setScanNotice(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+  }, [recipe]);
+
+  function dismissScanNotice() {
+    if (!recipe) return;
+    try {
+      window.sessionStorage.removeItem(`gn:scan-notice:${recipe.id}`);
+    } catch {
+      /* ignore */
+    }
+    setScanNotice(null);
+  }
 
   if (!recipe) {
     return (
@@ -44,6 +70,25 @@ function RecipeDetail() {
     deleteRecipeLocal(recipe!.id);
     router.navigate({ to: "/" });
   }
+
+  function onAddAllToGrocery() {
+    if (!recipe) return;
+    const originalServings = recipe.servings || 2;
+    const flat = recipe.ingredient_sections
+      ? recipe.ingredient_sections.flatMap((s) => s.items)
+      : recipe.ingredients;
+    addGroceryItems(
+      flat.map((ing) => ({
+        amount: scaleAmount(ing.amount ?? "", originalServings, servings) || ing.amount,
+        unit: ing.unit,
+        name: ing.name,
+        recipe_title: recipe.title,
+      })),
+    );
+    setAddedAll(true);
+    window.setTimeout(() => setAddedAll(false), 1600);
+  }
+
 
 
   const iSections = recipe.ingredient_sections;
