@@ -372,6 +372,10 @@ const he: Dict = {
   you: "אתה",
   cook_label: "השף",
   open_arrow: "פתח ←",
+  opening_message: "יום טוב. ספר לי מה בא לך — ארוחה מהירה, משהו מהמזווה, מנת מרכז לאירוח — ואני אמצא מתכון מהספר שלך או אציע מנה חדשה לנסות.",
+  with_filters_note: "(נשאר עם הפילטרים שלך: {summary})",
+  ignoring_filters_note: "(מתעלם מהפילטרים)",
+
 
   lang_toggle_to_he: "עברית",
   lang_toggle_to_en: "English",
