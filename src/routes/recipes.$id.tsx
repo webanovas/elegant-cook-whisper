@@ -7,6 +7,7 @@ import { PortionScaler } from "@/components/PortionScaler";
 import { IngredientRow } from "@/components/IngredientRow";
 import { StarRating } from "@/components/StarRating";
 import { useT } from "@/lib/i18n";
+import { TimedText } from "@/components/TimedText";
 
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
@@ -235,7 +236,9 @@ function StepLine({ n, text }: { n: number; text: string }) {
       >
         {String(n).padStart(2, "0")}
       </span>
-      <p className="text-sm leading-relaxed text-pretty">{text}</p>
+      <p className="text-sm leading-relaxed text-pretty">
+        <TimedText text={text} />
+      </p>
     </div>
   );
 }

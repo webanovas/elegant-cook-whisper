@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRecipe } from "@/lib/recipes-store";
 import { CookTimer } from "@/components/CookTimer";
 import { useLang, useT } from "@/lib/i18n";
+import { TimedText } from "@/components/TimedText";
 
 export const Route = createFileRoute("/recipes/$id/cook")({
   ssr: false,
@@ -137,7 +138,7 @@ function CookMode() {
                 {t("step")} {index + 1}
               </span>
               <h2 className="font-serif text-2xl sm:text-3xl leading-snug text-balance">
-                {current.text}
+                <TimedText text={current.text} />
               </h2>
             </motion.div>
           </AnimatePresence>

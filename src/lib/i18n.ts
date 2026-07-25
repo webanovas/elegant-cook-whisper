@@ -195,6 +195,9 @@ const en: Dict = {
   start_cook: "Start Cook Mode",
   sub: "Sub",
   substitute_loading: "Thinking of alternatives…",
+  more_subs: "more options",
+  start_timer_title: "Tap to start a timer",
+  timer_restart: "Restart",
   close: "Close",
   // cook mode
   cook_not_found: "Recipe not found on this device.",
@@ -358,6 +361,9 @@ const he: Dict = {
   start_cook: "התחל מצב בישול",
   sub: "תחליף",
   substitute_loading: "חושב על חלופות…",
+  more_subs: "עוד אפשרויות",
+  start_timer_title: "הקש להפעלת טיימר",
+  timer_restart: "התחל מחדש",
   close: "סגור",
 
   cook_not_found: "המתכון לא נמצא במכשיר.",
