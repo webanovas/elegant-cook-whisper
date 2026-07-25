@@ -133,6 +133,11 @@ const en: Dict = {
   quickness_90: "up to 1½ hours",
   rating_any: "any rating",
   rating_min: "at least {n}★",
+  quick_any: "any",
+  min_short: "m",
+  hr_short: "h",
+  and_up: "& up",
+
   reset_all: "reset all",
   ask_narrow: "✦ ask the cook to narrow it down",
   ask_placeholder_vibe: "cozy rainy night · impress my parents",
@@ -293,6 +298,11 @@ const he: Dict = {
   quickness_90: "עד שעה וחצי",
   rating_any: "כל דירוג",
   rating_min: "לפחות {n}★",
+  quick_any: "הכל",
+  min_short: "ד׳",
+  hr_short: "ש׳",
+  and_up: "ומעלה",
+
   reset_all: "אפס הכל",
   ask_narrow: "✦ תשאל את השף לסנן",
   ask_placeholder_vibe: "ערב גשום ונעים · להרשים את ההורים",

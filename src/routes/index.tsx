@@ -535,33 +535,11 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     <section>
       {hasRecipes && (
         <div className="mt-4 grid gap-4 md:grid-cols-[1fr_320px] items-start">
-          {/* Slider filters */}
-          <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-5">
-            <SliderRow
-              label={t("quickness")}
-              value={quickIdx}
-              max={QUICKNESS_STOPS.length - 1}
-              display={quicknessLabel(maxPrep, t)}
-              onChange={setQuickIdx}
-            />
+          {/* Ledger-style filters */}
+          <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-6">
+            <QuicknessTabs value={quickIdx} onChange={setQuickIdx} t={t} />
+            <RatingStars value={minRating} onChange={setMinRating} t={t} />
 
-            <SliderRow
-              label={t("rating_label")}
-              value={minRating}
-              max={5}
-              display={
-                minRating === 0
-                  ? t("rating_any")
-                  : t("rating_min").replace("{n}", String(minRating))
-              }
-              onChange={setMinRating}
-              renderTicks={(v) => (
-                <span className="text-terracotta tabular-nums text-[13px]">
-                  {"★".repeat(v)}
-                  <span className="text-ink/20">{"★".repeat(5 - v)}</span>
-                </span>
-              )}
-            />
 
             <div className="flex items-center justify-between gap-3 pt-1">
               <span className="small-caps text-[10px] text-ink-soft">
@@ -690,46 +668,119 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   );
 }
 
-function SliderRow({
-  label,
+type Tr = (k: string) => string;
+
+function QuicknessTabs({
   value,
-  max,
-  display,
   onChange,
-  renderTicks,
+  t,
 }: {
-  label: string;
   value: number;
-  max: number;
-  display: string;
   onChange: (v: number) => void;
-  renderTicks?: (v: number) => React.ReactNode;
+  t: Tr;
 }) {
+  const stops = QUICKNESS_STOPS;
+  const shortLabel = (i: number): string => {
+    const m = stops[i];
+    if (m === 0) return t("quick_any");
+    if (m < 60) return `${m}${t("min_short")}`;
+    if (m === 60) return `1${t("hr_short")}`;
+    return `1½${t("hr_short")}`;
+  };
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3 mb-2">
-        <span className="small-caps text-[10px] text-ink-soft">{label}</span>
-        <span className="font-serif italic text-[13px] text-ink">
-          {renderTicks ? renderTicks(value) : display}
+    <div className="space-y-3">
+      <div
+        className="flex justify-between items-baseline border-b border-terracotta/20 pb-1"
+      >
+        <span className="font-serif italic text-[19px] text-ink">
+          {t("quickness")}
+        </span>
+        <span className="small-caps text-[11px] tracking-widest text-terracotta font-semibold">
+          {quicknessLabel(stops[value], t)}
         </span>
       </div>
-      {/* Keep the slider itself in LTR so the "quicker/less strict" end
-          stays on the left even under RTL, matching the value labels. */}
-      <input
-        dir="ltr"
-        type="range"
-        min={0}
-        max={max}
-        step={1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-terracotta cursor-pointer"
-      />
-      {renderTicks && (
-        <p className="mt-1 text-[11px] text-ink-soft font-serif italic">
-          {display}
-        </p>
-      )}
+      <div dir="ltr" className="flex items-center justify-between gap-1">
+        {stops.map((_, i) => {
+          const active = i === value;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onChange(i)}
+              className={
+                "flex-1 py-2 border transition-colors small-caps text-[10px] tracking-widest " +
+                (active
+                  ? "bg-terracotta text-primary-foreground border-terracotta shadow-inner"
+                  : "border-terracotta/30 text-terracotta/70 hover:bg-terracotta/5")
+              }
+            >
+              {shortLabel(i)}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
+
+function RatingStars({
+  value,
+  onChange,
+  t,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  t: Tr;
+}) {
+  const summary =
+    value === 0
+      ? t("rating_any")
+      : `${value}★ ${t("and_up")}`;
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-baseline border-b border-terracotta/20 pb-1">
+        <span className="font-serif italic text-[19px] text-ink">
+          {t("rating_label")}
+        </span>
+        <span className="small-caps text-[11px] tracking-widest text-terracotta font-semibold">
+          {summary}
+        </span>
+      </div>
+      <div dir="ltr" className="flex items-center gap-1.5">
+        {[1, 2, 3, 4, 5].map((n) => {
+          const active = n <= value;
+          return (
+            <button
+              key={n}
+              type="button"
+              aria-label={`${n}`}
+              onClick={() => onChange(value === n ? 0 : n)}
+              className="p-1 transition-transform active:scale-90"
+            >
+              <svg
+                viewBox="0 0 20 20"
+                className={
+                  "w-6 h-6 " +
+                  (active ? "fill-gold" : "fill-ink/15 hover:fill-terracotta/30")
+                }
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </button>
+          );
+        })}
+        <div className="ms-2 flex-1 flex justify-between px-1 opacity-60">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <span
+              key={i}
+              className={
+                (i % 2 === 0 ? "h-2" : "h-1") + " w-px bg-terracotta/30"
+              }
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
