@@ -341,6 +341,24 @@ function ImportCard() {
               {t("transcribing")}
             </p>
           )}
+
+          <div className="mt-4 pt-4 border-t border-rule/40 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <Link
+              to="/recipes/scan"
+              className="small-caps text-[10px] text-terracotta hover:underline inline-flex items-center gap-1.5"
+            >
+              <span>📷</span>
+              <span>{t("scan_a_recipe")}</span>
+            </Link>
+            <span className="text-ink-soft/30 text-[10px]">·</span>
+            <Link
+              to="/recipes/new"
+              className="small-caps text-[10px] text-terracotta hover:underline inline-flex items-center gap-1.5"
+            >
+              <span>✎</span>
+              <span>{t("write_manually")}</span>
+            </Link>
+          </div>
         </div>
       )}
     </section>
