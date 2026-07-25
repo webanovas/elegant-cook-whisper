@@ -24,18 +24,34 @@ type UIMessage = {
   role: "user" | "assistant";
   content: string;
   suggestions?: RecipeSuggestion[];
+  opening?: boolean;
 };
-
 
 function ChatPage() {
   const send = useServerFn(chatWithGemini);
   const recipes = useRecipes();
-  const [messages, setMessages] = useState<UIMessage[]>([OPENING]);
+  const t = useT();
+  const lang = useLang();
+
+  const opening: UIMessage = useMemo(
+    () => ({ role: "assistant", content: t("opening_message"), opening: true }),
+    [t],
+  );
+
+  const [messages, setMessages] = useState<UIMessage[]>([opening]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Keep the opening message in sync with the current language when the
+  // conversation is still fresh (only the opening bubble is on screen).
+  useEffect(() => {
+    setMessages((cur) =>
+      cur.length === 1 && cur[0].opening ? [opening] : cur,
+    );
+  }, [opening]);
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -63,7 +79,7 @@ function ChatPage() {
       const reply = await send({
         data: {
           messages: nextHistory
-            .filter((m) => m !== OPENING)
+            .filter((m) => !m.opening)
             .map((m) => ({ role: m.role, content: m.content })),
           library: recipes.map((r) => ({
             id: r.id,
@@ -71,6 +87,7 @@ function ChatPage() {
             description: r.description,
             tags: r.tags,
           })),
+          lang,
         },
       });
       setMessages((cur) => [
@@ -104,17 +121,16 @@ function ChatPage() {
             to="/"
             className="small-caps text-[11px] text-ink-soft hover:text-terracotta transition-colors"
           >
-            ← Back to cookbook
+            {t("back_cookbook_short")}
           </Link>
-          <span className="small-caps text-[11px] text-ink-soft">Chapter · ??</span>
         </div>
 
         <header className="mt-8 text-center">
           <p className="small-caps text-[11px] text-terracotta mb-3">
-            a conversation with
+            {t("a_conversation_with")}
           </p>
           <h1 className="font-serif text-[2.75rem] leading-[1.05] italic tracking-tight">
-            the Resident Cook
+            {t("the_cook")}
           </h1>
           <div className="ornament-rule mt-4">
             <span className="text-terracotta">✦</span>
@@ -140,9 +156,10 @@ function ChatPage() {
                     <AssistantBubble
                       content={m.content}
                       suggestions={m.suggestions}
+                      t={t}
                     />
                   ) : (
-                    <UserBubble content={m.content} />
+                    <UserBubble content={m.content} t={t} />
                   )}
                 </motion.div>
               ))}
@@ -153,7 +170,7 @@ function ChatPage() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <TypingIndicator />
+                  <TypingIndicator t={t} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -174,20 +191,20 @@ function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
             rows={2}
-            placeholder="What shall we cook today?"
+            placeholder={t("ask_placeholder")}
             className="w-full bg-transparent px-4 pt-3 pb-1 text-[15px] leading-relaxed font-serif italic placeholder:text-ink-soft/60 outline-none resize-none"
             disabled={loading}
           />
           <div className="flex items-center justify-between px-3 pb-2">
             <span className="small-caps text-[10px] text-ink-soft/70">
-              enter to send · shift + enter for a new line
+              {t("enter_hint")}
             </span>
             <button
               type="submit"
               disabled={loading || !input.trim()}
               className="bg-terracotta text-primary-foreground px-4 py-1.5 rounded-md text-sm font-medium tracking-wide transition-transform active:scale-95 disabled:opacity-50"
             >
-              Ask
+              {t("ask")}
             </button>
           </div>
         </form>
@@ -199,13 +216,15 @@ function ChatPage() {
 function AssistantBubble({
   content,
   suggestions,
+  t,
 }: {
   content: string;
   suggestions?: RecipeSuggestion[];
+  t: (k: string) => string;
 }) {
   return (
     <div>
-      <p className="small-caps text-[10px] text-terracotta mb-2">the cook</p>
+      <p className="small-caps text-[10px] text-terracotta mb-2">{t("cook_label")}</p>
       <div className="font-serif text-[17px] leading-[1.7] text-ink whitespace-pre-wrap">
         {content}
       </div>
@@ -220,7 +239,7 @@ function AssistantBubble({
             >
               <span className="font-serif text-[15px] italic">{s.title}</span>
               <span className="small-caps text-[10px] text-ink-soft group-hover:text-terracotta">
-                open →
+                {t("open_arrow")}
               </span>
             </Link>
           ))}
@@ -230,19 +249,19 @@ function AssistantBubble({
   );
 }
 
-function UserBubble({ content }: { content: string }) {
+function UserBubble({ content, t }: { content: string; t: (k: string) => string }) {
   return (
-    <div className="pl-6 border-l-2 border-terracotta/40">
-      <p className="small-caps text-[10px] text-ink-soft mb-1">you</p>
+    <div className="ps-6 border-s-2 border-terracotta/40">
+      <p className="small-caps text-[10px] text-ink-soft mb-1">{t("you")}</p>
       <p className="text-[15px] leading-relaxed text-ink">{content}</p>
     </div>
   );
 }
 
-function TypingIndicator() {
+function TypingIndicator({ t }: { t: (k: string) => string }) {
   return (
     <div>
-      <p className="small-caps text-[10px] text-terracotta mb-2">the cook</p>
+      <p className="small-caps text-[10px] text-terracotta mb-2">{t("cook_label")}</p>
       <div className="flex items-center gap-1.5">
         {[0, 1, 2].map((i) => (
           <motion.span
