@@ -20,9 +20,7 @@ function CookMode() {
   const rtl = lang === "he";
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [chromeHidden, setChromeHidden] = useState(false);
 
-  // Flatten sections with section-title dividers, so multi-component recipes read cleanly.
   const steps = useMemo(() => {
     if (!recipe) return [] as Array<{ text: string; section?: string }>;
     if (recipe.instruction_sections && recipe.instruction_sections.length > 0) {
@@ -76,26 +74,23 @@ function CookMode() {
     );
   }
 
-  // In RTL, "next" content should slide in from the left (visually the same
-  // logical direction as LTR). Flip the sign so the animation reads naturally.
   const slideSign = rtl ? -1 : 1;
   const current = steps[index];
 
   return (
-    <div className="min-h-screen h-[100dvh] bg-background text-foreground flex flex-col">
+    <div className="min-h-screen h-[100dvh] bg-background text-foreground flex flex-col relative">
+      {/* Tiny always-visible exit button in the top corner */}
+      <Link
+        to="/recipes/$id"
+        params={{ id }}
+        aria-label={t("exit")}
+        className="absolute top-3 end-3 z-20 size-9 rounded-full grid place-items-center bg-background/70 backdrop-blur-md border border-border/60 text-ink-soft hover:text-terracotta hover:border-terracotta/50 transition-colors text-lg leading-none"
+      >
+        ×
+      </Link>
+
       <div className="max-w-[440px] w-full mx-auto flex-1 flex flex-col overflow-hidden">
-        <header
-          className={`p-6 flex justify-between items-center transition-opacity duration-300 ${
-            chromeHidden ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}
-        >
-          <Link
-            to="/recipes/$id"
-            params={{ id }}
-            className="text-[10px] uppercase tracking-widest font-medium"
-          >
-            {t("exit")}
-          </Link>
+        <header className="pt-5 px-6 pb-2 flex justify-center">
           <div className="flex gap-1" dir="ltr">
             {steps.map((_step, i) => (
               <div
@@ -110,15 +105,16 @@ function CookMode() {
               />
             ))}
           </div>
-          <span dir="ltr" className="text-[10px] font-medium tabular-nums">
-            {index + 1} / {total}
-          </span>
         </header>
 
-        <main
-          className="flex-1 flex flex-col justify-center px-8 text-center overflow-hidden relative cursor-pointer"
-          onClick={() => setChromeHidden((v) => !v)}
-        >
+        <main className="flex-1 flex flex-col justify-center px-8 text-center overflow-hidden relative">
+          <span
+            dir="ltr"
+            className="absolute top-0 left-1/2 -translate-x-1/2 text-[10px] font-medium tabular-nums text-ink-soft"
+          >
+            {index + 1} / {total}
+          </span>
+
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={index}
@@ -143,22 +139,12 @@ function CookMode() {
             </motion.div>
           </AnimatePresence>
 
-          <div onClick={(e) => e.stopPropagation()}>
+          <div>
             <CookTimer />
           </div>
-
-          {chromeHidden && (
-            <p className="absolute bottom-4 left-0 right-0 text-center small-caps text-[9px] text-ink-soft/60">
-              {t("tap_show")}
-            </p>
-          )}
         </main>
 
-        <footer
-          className={`p-6 grid grid-cols-2 gap-4 transition-opacity duration-300 ${
-            chromeHidden ? "opacity-0 pointer-events-none" : "opacity-100"
-          }`}
-        >
+        <footer className="p-6 grid grid-cols-2 gap-4">
           <button
             type="button"
             onClick={() => go(-1)}

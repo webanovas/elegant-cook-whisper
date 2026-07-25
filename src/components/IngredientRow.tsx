@@ -5,6 +5,7 @@ import { suggestSubstitute } from "@/lib/recipes.functions";
 import { scaleAmount } from "@/lib/scale";
 import type { Ingredient } from "@/lib/recipes.functions";
 import { useT } from "@/lib/i18n";
+import { addGroceryItem } from "@/lib/grocery-store";
 
 type Alt = { name: string; amount: string; note: string };
 
@@ -25,6 +26,7 @@ export function IngredientRow({
   const [moreLoading, setMoreLoading] = useState(false);
   const [alts, setAlts] = useState<Alt[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
   const suggest = useServerFn(suggestSubstitute);
   const t = useT();
 
@@ -62,6 +64,18 @@ export function IngredientRow({
     await fetchAlts("initial");
   }
 
+  function handleAddToGrocery() {
+    if (!ingredient.name.trim()) return;
+    addGroceryItem({
+      amount: scaledAmount || ingredient.amount || "",
+      unit: ingredient.unit || "",
+      name: ingredient.name,
+      recipe_title: recipeTitle,
+    });
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1400);
+  }
+
   return (
     <li className="group">
       <div className="flex justify-between items-baseline gap-3">
@@ -88,6 +102,15 @@ export function IngredientRow({
               </span>
             </span>
           </motion.span>
+        </button>
+        <button
+          type="button"
+          onClick={handleAddToGrocery}
+          aria-label={t("add_to_grocery")}
+          title={t("add_to_grocery")}
+          className="text-[13px] leading-none text-ink-soft opacity-60 group-hover:opacity-100 hover:text-terracotta transition-colors shrink-0 px-1"
+        >
+          {added ? "✓" : "🛒"}
         </button>
         <button
           type="button"
@@ -163,4 +186,3 @@ export function IngredientRow({
     </li>
   );
 }
-
