@@ -43,6 +43,10 @@ export async function putRecipeImage(id: string, dataUrl: string): Promise<void>
   if (!isBrowser()) return;
   const blob = await dataUrlToBlob(dataUrl);
   await tx("readwrite", (s) => s.put(blob, id));
+  // Notify any mounted image hooks that the blob is now available. Fixes
+  // the race where saveRecipe writes the "idb:" marker before the blob
+  // has actually landed in IndexedDB.
+  window.dispatchEvent(new CustomEvent("gn:image-updated", { detail: { id } }));
 }
 
 export async function getRecipeImage(id: string): Promise<Blob | undefined> {
@@ -79,13 +83,26 @@ export function useRecipeImage(id: string, storedUrl: string | null): string | n
     }
     let objectUrl: string | null = null;
     let cancelled = false;
-    getRecipeImage(id).then((blob) => {
+
+    async function load() {
+      const blob = await getRecipeImage(id);
       if (cancelled || !blob) return;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
       objectUrl = URL.createObjectURL(blob);
       setUrl(objectUrl);
-    });
+    }
+    load();
+
+    // Re-load when a background image write finishes for this id.
+    const onUpdate = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: string }>).detail;
+      if (detail?.id === id) load();
+    };
+    window.addEventListener("gn:image-updated", onUpdate);
+
     return () => {
       cancelled = true;
+      window.removeEventListener("gn:image-updated", onUpdate);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [id, storedUrl]);
