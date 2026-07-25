@@ -35,7 +35,14 @@ function LibraryPage() {
 
   return (
     <div className="min-h-screen py-8 sm:py-12 px-4">
-      <div className="max-w-[760px] mx-auto flex justify-end mb-2">
+      <div className="max-w-[760px] mx-auto flex justify-between items-center mb-2">
+        <Link
+          to="/grocery"
+          className="small-caps text-[11px] text-ink-soft hover:text-terracotta inline-flex items-center gap-1.5"
+        >
+          <span>🛒</span>
+          <span>{t("grocery_link")}</span>
+        </Link>
         <LangToggle />
       </div>
 
