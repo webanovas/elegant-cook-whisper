@@ -163,6 +163,8 @@ const en: Dict = {
   clip: "Clip",
   reading: "Reading…",
   search_ph_web: "e.g. Neapolitan pizza dough",
+  search_ph_web_short: "e.g. pizza dough",
+
   search: "Search",
   searching: "Searching…",
   no_web_results: "No recipes found. Try a different search.",
