@@ -98,7 +98,6 @@ export async function fetchPageText(url: string): Promise<string> {
             url,
             formats: ["markdown"],
             onlyMainContent: true,
-            waitFor: 1500,
           }),
         },
       );
