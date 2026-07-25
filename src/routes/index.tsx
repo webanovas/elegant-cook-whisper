@@ -9,6 +9,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { useT, useLang } from "@/lib/i18n";
 import {
   extractRecipe,
+  generateRecipeImage,
   searchRecipesOnWeb,
   type WebRecipeResult,
 } from "@/lib/recipes.functions";
@@ -142,6 +143,7 @@ function ImportCard() {
   const router = useRouter();
   const t = useT();
   const extract = useServerFn(extractRecipe);
+  const genImage = useServerFn(generateRecipeImage);
   const search = useServerFn(searchRecipesOnWeb);
   const [mode, setMode] = useState<"url" | "search">("url");
   const [url, setUrl] = useState("");
@@ -162,6 +164,16 @@ function ImportCard() {
       const saved = saveRecipe({ ...extracted, cookbook_id: "general" });
       setUrl("");
       router.navigate({ to: "/recipes/$id", params: { id: saved.id } });
+      // Generate hero image in the background so navigation is instant.
+      if (extracted.image_prompt) {
+        genImage({ data: { prompt: extracted.image_prompt } })
+          .then((res) => {
+            if (res.image_url) {
+              saveRecipe({ ...saved, image_url: res.image_url });
+            }
+          })
+          .catch((e) => console.error("hero image gen failed", e));
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
