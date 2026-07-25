@@ -233,3 +233,11 @@
   background-repeat: no-repeat;
   padding-bottom: 4px;
 }
+
+/* Cook-mode: enlarge readable content on the recipe detail page. */
+.cook-mode-on {
+  h3 { font-size: 1.75rem; }
+  .text-sm { font-size: 1.05rem; line-height: 1.7; }
+  .text-xs { font-size: 0.9rem; }
+  h1 { font-size: 2.75rem; }
+}
