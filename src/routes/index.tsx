@@ -1,271 +1,368 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import {
-  useCookbooks,
-  createCookbook,
-  type Cookbook,
-} from "@/lib/cookbooks-store";
-import { useRecipes } from "@/lib/recipes-store";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { useRecipes, saveRecipe, type Recipe } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
 import { RecipeCard } from "@/components/RecipeCard";
 import { LangToggle } from "@/components/LangToggle";
 import { useT } from "@/lib/i18n";
-
+import {
+  extractRecipe,
+  searchRecipesOnWeb,
+  type WebRecipeResult,
+} from "@/lib/recipes.functions";
+import { filterRecipesByVibe } from "@/lib/classify.functions";
 
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Gourmet Notes — Your cookbook shelf" },
+      { title: "Gourmet Notes — Your private recipe library" },
       {
         name: "description",
         content:
-          "A private shelf of vintage cookbooks. Open one, or start a new volume — cookies, pastas, whatever you're keeping.",
+          "A private, growing library of the recipes you love. Filter by dish, prep time, rating, or ask the cook for a vibe.",
       },
     ],
   }),
-  component: ShelfPage,
+  component: LibraryPage,
 });
 
-function ShelfPage() {
-  const books = useCookbooks();
+function LibraryPage() {
   const recipes = useRecipes();
-  const [creating, setCreating] = useState(false);
   const t = useT();
-
-  const countFor = (id: string) =>
-    recipes.filter((r) => r.cookbook_id === id).length;
 
   return (
     <div className="min-h-screen py-8 sm:py-12 px-4">
-      <div className="max-w-[720px] mx-auto flex justify-end mb-2">
+      <div className="max-w-[760px] mx-auto flex justify-end mb-2">
         <LangToggle />
       </div>
-      <header className="text-center max-w-[520px] mx-auto">
-        <p className="small-caps text-[11px] text-terracotta">{t("from_library")}</p>
-        <h1 className="mt-2 font-serif text-[3rem] sm:text-[3.4rem] leading-[0.95] tracking-tight">
-          <span className="italic">Gourmet</span>
-          <br />
-          Notes
-        </h1>
-        <div className="mx-auto mt-5 flex items-center gap-3 max-w-[240px]">
-          <span className="flex-1 h-px bg-rule/60" />
-          <span className="text-gold text-lg">❦</span>
-          <span className="flex-1 h-px bg-rule/60" />
-        </div>
-        <p className="mt-5 font-serif italic text-[15px] text-ink-soft leading-relaxed">
-          {t("choose_or_bind")}
-        </p>
-      </header>
 
+      <ProudHeader count={recipes.length} />
 
-      <div className="mt-10 max-w-[720px] mx-auto">
-        <SearchAllRecipes recipes={recipes} books={books} />
+      <div className="mt-10 max-w-[760px] mx-auto">
+        <ImportCard />
 
-        <BookShelf books={books} countFor={countFor} />
-
-        <div className="mt-10">
-          {creating ? (
-            <NewBookForm
-              onClose={() => setCreating(false)}
-              onCreated={() => setCreating(false)}
-            />
-          ) : (
-            <button
-              onClick={() => setCreating(true)}
-              className="mx-auto block small-caps text-[11px] text-terracotta hover:text-ink transition-colors border border-terracotta/40 rounded-full px-5 py-2"
-            >
-              + bind a new volume
-            </button>
-          )}
-        </div>
+        <FilterableGallery recipes={recipes} />
 
         <div className="mt-14 text-center">
           <Link
             to="/chat"
             className="inline-flex items-center gap-2 small-caps text-[11px] text-ink-soft hover:text-terracotta transition-colors"
           >
-            ask the cook for ideas →
+            {t("ask_the_cook")}
           </Link>
         </div>
       </div>
 
       <p className="mt-14 text-center small-caps text-[10px] text-ink-soft/70">
-        kept privately on this device
+        {t("kept_privately")}
       </p>
     </div>
   );
 }
 
-function BookShelf({
-  books,
-  countFor,
-}: {
-  books: Cookbook[];
-  countFor: (id: string) => number;
-}) {
+/* ------------------------- proud header w/ counter ------------------------ */
+
+function ProudHeader({ count }: { count: number }) {
+  const tier =
+    count === 0
+      ? "empty"
+      : count < 5
+        ? "seedling"
+        : count < 15
+          ? "growing"
+          : count < 40
+            ? "flourishing"
+            : count < 100
+              ? "abundant"
+              : "legendary";
+
+  const tierLine: Record<typeof tier, string> = {
+    empty: "your library is waiting for its first page",
+    seedling: "a young library, promising",
+    growing: "a proper little collection",
+    flourishing: "a flourishing kitchen library",
+    abundant: "an abundant, well-loved cookbook",
+    legendary: "a legendary personal library ✦",
+  };
+
   return (
-    <div className="relative">
-      {/* wooden shelf plank */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-8 items-end pb-4">
-        {books.map((b) => (
-          <BookOnShelf key={b.id} book={b} count={countFor(b.id)} />
-        ))}
+    <header className="text-center max-w-[560px] mx-auto">
+      <p className="small-caps text-[11px] text-terracotta">Gourmet Notes</p>
+      <h1 className="mt-2 font-serif text-[3rem] sm:text-[3.4rem] leading-[0.95] tracking-tight">
+        <span className="italic">Your</span>
+        <br />
+        Library
+      </h1>
+      <div className="mx-auto mt-5 flex items-center gap-3 max-w-[240px]">
+        <span className="flex-1 h-px bg-rule/60" />
+        <span className="text-gold text-lg">❦</span>
+        <span className="flex-1 h-px bg-rule/60" />
       </div>
-      <div
-        aria-hidden
-        className="h-3 rounded-sm shadow-[0_10px_18px_-10px_rgba(43,31,20,0.6)]"
-        style={{
-          background:
-            "linear-gradient(to bottom, #7a5231, #4b2f18 60%, #2e1c0e)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="h-1 bg-black/30 mx-2 rounded-b-sm"
-      />
-    </div>
-  );
-}
 
-function BookOnShelf({ book, count }: { book: Cookbook; count: number }) {
-  const cover = `hsl(${book.hue} 40% 32%)`;
-  const coverDeep = `hsl(${book.hue} 45% 22%)`;
-  const gilt = `hsl(${book.hue} 50% 75%)`;
-
-  return (
-    <Link
-      to="/books/$id"
-      params={{ id: book.id }}
-      className="group block relative"
-      style={{ perspective: "800px" }}
-    >
-      <div
-        className="relative mx-auto w-full max-w-[190px] aspect-[3/4] rounded-[3px] shadow-[0_18px_28px_-14px_rgba(0,0,0,0.55),0_4px_10px_-4px_rgba(0,0,0,0.4)] transition-transform duration-500 group-hover:-translate-y-1 group-hover:rotate-[-0.6deg]"
-        style={{
-          background: `linear-gradient(135deg, ${cover}, ${coverDeep})`,
-          transformOrigin: "bottom center",
-        }}
+      <motion.div
+        key={count}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mt-6 flex flex-col items-center"
       >
-        {/* spine highlight */}
-        <div
-          aria-hidden
-          className="absolute inset-y-0 left-0 w-2 rounded-l-[3px]"
-          style={{
-            background:
-              "linear-gradient(to right, rgba(255,255,255,0.14), rgba(0,0,0,0.35))",
-          }}
-        />
-        {/* pages edge on right */}
-        <div
-          aria-hidden
-          className="absolute inset-y-1 right-0 w-1"
-          style={{
-            background:
-              "repeating-linear-gradient(to bottom, #f1e7ce 0 2px, #d9caa4 2px 3px)",
-            borderRadius: "0 2px 2px 0",
-          }}
-        />
-        {/* gilt frame */}
-        <div
-          className="absolute inset-4 rounded-[2px] flex flex-col items-center justify-center text-center px-2"
-          style={{
-            border: `1px solid ${gilt}`,
-            boxShadow: `inset 0 0 0 3px transparent, inset 0 0 0 4px ${gilt}22`,
-          }}
-        >
-          <span className="text-2xl mb-2 drop-shadow-sm">{book.emoji}</span>
-          <p
-            className="font-serif italic text-[15px] leading-tight"
-            style={{ color: gilt }}
+        <div className="flex items-baseline gap-3">
+          <span
+            dir="ltr"
+            className="font-serif italic text-[5rem] sm:text-[6rem] leading-none tabular-nums text-terracotta drop-shadow-[0_2px_0_rgba(168,93,68,0.15)]"
           >
-            {book.name}
-          </p>
-          {book.subtitle && (
-            <p
-              className="mt-1 small-caps text-[8px]"
-              style={{ color: `${gilt}cc` }}
-            >
-              {book.subtitle}
-            </p>
-          )}
-          <div
-            className="mt-3 h-px w-8"
-            style={{ background: `${gilt}66` }}
-          />
-          <p
-            className="mt-2 small-caps text-[8px]"
-            style={{ color: `${gilt}aa` }}
-          >
-            {count === 0
-              ? "empty"
-              : `${count} ${count === 1 ? "entry" : "entries"}`}
-          </p>
+            {count}
+          </span>
+          <span className="small-caps text-[11px] text-ink-soft">
+            {count === 1 ? "recipe" : "recipes"}
+          </span>
         </div>
-      </div>
-      <p className="mt-3 text-center small-caps text-[9px] text-ink-soft">
-        open volume
-      </p>
-    </Link>
+        <p className="mt-3 font-serif italic text-[14px] text-ink-soft">
+          {tierLine[tier]}
+        </p>
+      </motion.div>
+    </header>
   );
 }
 
-function NewBookForm({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void;
-  onCreated: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [subtitle, setSubtitle] = useState("");
+/* --------------------------------- import --------------------------------- */
 
-  function submit(e: React.FormEvent) {
+function ImportCard() {
+  const router = useRouter();
+  const extract = useServerFn(extractRecipe);
+  const search = useServerFn(searchRecipesOnWeb);
+  const [mode, setMode] = useState<"url" | "search">("url");
+  const [url, setUrl] = useState("");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<WebRecipeResult[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [importingUrl, setImportingUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+
+  async function importFromUrl(sourceUrl: string) {
+    setLoading(true);
+    setError(null);
+    setImportingUrl(sourceUrl);
+    try {
+      const extracted = await extract({ data: { url: sourceUrl } });
+      const saved = saveRecipe({ ...extracted, cookbook_id: "general" });
+      setUrl("");
+      router.navigate({ to: "/recipes/$id", params: { id: saved.id } });
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+      setImportingUrl(null);
+    }
+  }
+
+  async function onSubmitUrl(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
-    createCookbook({ name, subtitle });
-    onCreated();
+    if (!url.trim()) return;
+    await importFromUrl(url.trim());
+  }
+
+  async function onSubmitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!query.trim() || searching) return;
+    setSearching(true);
+    setError(null);
+    setResults(null);
+    try {
+      const rows = await search({ data: { query: query.trim() } });
+      setResults(rows);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSearching(false);
+    }
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="max-w-[420px] mx-auto paper-page rounded-[3px] p-5"
-    >
-      <p className="small-caps text-[10px] text-terracotta text-center">
-        bind a new volume
-      </p>
-      <input
-        autoFocus
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Title (e.g. Cookies, Pastas)"
-        className="mt-3 w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-lg outline-none focus:border-terracotta"
-      />
-      <input
-        value={subtitle}
-        onChange={(e) => setSubtitle(e.target.value)}
-        placeholder="A short subtitle (optional)"
-        className="mt-3 w-full bg-transparent border-b border-rule/40 py-2 text-sm outline-none focus:border-terracotta"
-      />
-      <div className="mt-5 flex gap-2 justify-end">
-        <button
-          type="button"
-          onClick={onClose}
-          className="small-caps text-[10px] text-ink-soft px-3 py-2"
+    <section className="mb-8 paper-page rounded-[3px] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+        aria-expanded={open}
+      >
+        <span className="small-caps text-[11px] text-terracotta">
+          + add a new recipe
+        </span>
+        <span
+          className={`text-terracotta text-xs transition-transform duration-300 ${
+            open ? "rotate-180" : ""
+          }`}
         >
-          cancel
-        </button>
-        <button
-          type="submit"
-          className="bg-ink text-paper text-sm px-4 py-2 rounded active:scale-95 transition-transform"
-        >
-          Bind volume
-        </button>
-      </div>
-    </form>
+          ▾
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-rule/40 px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-center gap-2">
+            <ModeTab active={mode === "url"} onClick={() => setMode("url")}>
+              from a URL
+            </ModeTab>
+            <span className="text-ink-soft/40 text-[10px]">·</span>
+            <ModeTab active={mode === "search"} onClick={() => setMode("search")}>
+              search the web
+            </ModeTab>
+          </div>
+
+          {mode === "url" ? (
+            <form onSubmit={onSubmitUrl} className="mt-3 flex gap-2">
+              <input
+                type="url"
+                required
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="Paste any recipe URL…"
+                className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+              >
+                {loading ? "Reading…" : "Clip"}
+              </button>
+            </form>
+          ) : (
+            <>
+              <form onSubmit={onSubmitSearch} className="mt-3 flex gap-2">
+                <input
+                  type="text"
+                  required
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="e.g. Neapolitan pizza dough"
+                  className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+                  disabled={searching || loading}
+                />
+                <button
+                  type="submit"
+                  disabled={searching || loading}
+                  className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+                >
+                  {searching ? "Searching…" : "Search"}
+                </button>
+              </form>
+
+              {results && results.length > 0 && (
+                <ul className="mt-4 divide-y divide-rule/40 border-y border-rule/40">
+                  {[...results]
+                    .sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
+                    .map((r) => {
+                      const isImporting = importingUrl === r.url;
+                      return (
+                        <li key={r.url}>
+                          <button
+                            type="button"
+                            onClick={() => importFromUrl(r.url)}
+                            disabled={loading}
+                            className="w-full text-left py-3 px-1 flex items-start gap-3 hover:bg-terracotta/5 disabled:opacity-50 transition-colors rounded"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="font-serif italic text-[14px] leading-snug text-balance">
+                                {r.title}
+                              </p>
+                              {(r.rating !== null || r.reviews !== null) && (
+                                <div className="mt-1 flex items-center gap-1.5">
+                                  {r.rating !== null && (
+                                    <>
+                                      <StarRating
+                                        value={Math.round(r.rating)}
+                                        readOnly
+                                        size="sm"
+                                      />
+                                      <span className="small-caps text-[10px] text-ink">
+                                        {r.rating.toFixed(1)}
+                                      </span>
+                                    </>
+                                  )}
+                                  {r.reviews !== null && (
+                                    <span className="text-[10px] text-ink-soft">
+                                      ({r.reviews.toLocaleString()})
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {r.description && (
+                                <p className="mt-1 text-[11px] text-ink-soft line-clamp-2">
+                                  {r.description}
+                                </p>
+                              )}
+                              {r.source && (
+                                <p className="mt-1 small-caps text-[9px] text-terracotta/80">
+                                  {r.source}
+                                </p>
+                              )}
+                            </div>
+                            <span className="small-caps text-[10px] text-terracotta shrink-0 mt-1">
+                              {isImporting ? "clipping…" : "clip →"}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                </ul>
+              )}
+              {results && results.length === 0 && (
+                <p className="mt-3 text-xs text-ink-soft italic text-center">
+                  No recipes found. Try a different search.
+                </p>
+              )}
+            </>
+          )}
+
+          {error && (
+            <p className="mt-2 text-xs text-destructive italic text-center">
+              {error}
+            </p>
+          )}
+          {loading && (
+            <p className="mt-2 text-xs text-ink-soft italic text-center">
+              Transcribing to a fresh page & plating a picture…
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
+
+function ModeTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`small-caps text-[10px] px-2 py-1 rounded transition-colors ${
+        active
+          ? "text-terracotta border-b border-terracotta"
+          : "text-ink-soft hover:text-terracotta"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* -------------------------------- gallery --------------------------------- */
 
 function parsePrepMinutes(s: string | null): number | null {
   if (!s) return null;
@@ -290,21 +387,34 @@ const PREP_BUCKETS = [
   { id: "xlong", label: "over 1 hour", test: (n: number | null) => n !== null && n > 60 },
 ] as const;
 
-function SearchAllRecipes({
-  recipes,
-  books: _books,
-}: {
-  recipes: ReturnType<typeof useRecipes>;
-  books: Cookbook[];
-}) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
+type SortKey = "surprise" | "quick" | "top" | "newest" | "az";
+
+/** Stable-ish random shuffle seeded by a session key so it doesn't reshuffle on every render. */
+function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
+  const out = [...arr];
+  let s = seed || 1;
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
+  const askVibe = useServerFn(filterRecipesByVibe);
   const [query, setQuery] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [dishType, setDishType] = useState<string>("all");
   const [prepBucket, setPrepBucket] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"top" | "quick" | "newest" | "az">("top");
-  const [pickFlash, setPickFlash] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortKey>("surprise");
+  const [shuffleSeed, setShuffleSeed] = useState(() => Math.floor(Math.random() * 1e6));
+  const [vibe, setVibe] = useState("");
+  const [vibeLoading, setVibeLoading] = useState(false);
+  const [vibeError, setVibeError] = useState<string | null>(null);
+  const [vibeIds, setVibeIds] = useState<string[] | null>(null);
+  const [vibeNote, setVibeNote] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -312,10 +422,19 @@ function SearchAllRecipes({
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [recipes]);
 
+  // Reset a stale AI pick when the underlying library changes.
+  useEffect(() => {
+    if (vibeIds && vibeIds.some((id) => !recipes.find((r) => r.id === id))) {
+      setVibeIds(null);
+      setVibeNote(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipes.length]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const bucket = PREP_BUCKETS.find((b) => b.id === prepBucket) ?? PREP_BUCKETS[0];
-    const list = recipes.filter((r) => {
+    const base = recipes.filter((r) => {
       if (minRating > 0 && (r.rating ?? 0) < minRating) return false;
       if (dishType !== "all" && !r.tags.some((t) => t.toLowerCase() === dishType.toLowerCase()))
         return false;
@@ -326,7 +445,14 @@ function SearchAllRecipes({
         .toLowerCase();
       return hay.includes(q);
     });
-    const sorted = [...list];
+
+    // Gemini vibe overrides sort with its own ordered ids (intersected with filters).
+    if (vibeIds && vibeIds.length > 0) {
+      const map = new Map(base.map((r) => [r.id, r]));
+      return vibeIds.map((id) => map.get(id)).filter(Boolean) as Recipe[];
+    }
+
+    const sorted = [...base];
     if (sortBy === "top") {
       sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     } else if (sortBy === "quick") {
@@ -337,201 +463,261 @@ function SearchAllRecipes({
       });
     } else if (sortBy === "az") {
       sorted.sort((a, b) => a.title.localeCompare(b.title));
-    } else {
+    } else if (sortBy === "newest") {
       sorted.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+    } else {
+      // surprise (default) — random with a stable seed
+      return shuffleWithSeed(sorted, shuffleSeed);
     }
     return sorted;
-  }, [recipes, query, minRating, dishType, prepBucket, sortBy]);
+  }, [recipes, query, minRating, dishType, prepBucket, sortBy, shuffleSeed, vibeIds]);
+
+  async function runVibe(e: React.FormEvent) {
+    e.preventDefault();
+    if (!vibe.trim() || vibeLoading) return;
+    setVibeLoading(true);
+    setVibeError(null);
+    try {
+      const compact = recipes.map((r) => ({
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        tags: r.tags,
+        prep_time: r.prep_time,
+        cook_time: r.cook_time,
+        rating: r.rating ?? null,
+      }));
+      const res = await askVibe({ data: { vibe: vibe.trim(), recipes: compact } });
+      if (res.ids.length === 0) {
+        setVibeError("The cook couldn't match that mood — try different words.");
+        setVibeIds(null);
+        setVibeNote(null);
+      } else {
+        setVibeIds(res.ids);
+        setVibeNote(res.note);
+      }
+    } catch (err) {
+      setVibeError((err as Error).message);
+    } finally {
+      setVibeLoading(false);
+    }
+  }
+
+  function clearVibe() {
+    setVibeIds(null);
+    setVibeNote(null);
+    setVibe("");
+    setVibeError(null);
+  }
 
   function reset() {
     setQuery("");
     setMinRating(0);
     setDishType("all");
     setPrepBucket("all");
-    setSortBy("top");
+    setSortBy("surprise");
+    setShuffleSeed(Math.floor(Math.random() * 1e6));
+    clearVibe();
   }
 
-  function pickForMe() {
-    if (filtered.length === 0) return;
-    // Weight by rating: unrated = 1, rated = rating + 1 (so 5-star ~ 6x more likely than unrated)
-    const weights = filtered.map((r) => (r.rating ?? 0) + 1);
-    const total = weights.reduce((s, w) => s + w, 0);
-    let pick = Math.random() * total;
-    let chosen = filtered[0];
-    for (let i = 0; i < filtered.length; i++) {
-      pick -= weights[i];
-      if (pick <= 0) {
-        chosen = filtered[i];
-        break;
-      }
-    }
-    setPickFlash(chosen.title);
-    setTimeout(() => {
-      router.navigate({ to: "/recipes/$id", params: { id: chosen.id } });
-    }, 450);
-  }
+  const hasRecipes = recipes.length > 0;
 
   return (
-    <section className="mb-10">
-      <div className="paper-page rounded-[3px] overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
-          aria-expanded={open}
-        >
-          <span className="flex items-center gap-2 small-caps text-[11px] text-terracotta">
-            <span>⌕</span>
-            search all recipes
-            <span className="text-ink-soft/70">· {recipes.length}</span>
-          </span>
-          <span
-            className={`text-terracotta text-xs transition-transform duration-300 ${
-              open ? "rotate-180" : ""
-            }`}
-          >
-            ▾
-          </span>
-        </button>
-
-        {open && (
-          <div className="border-t border-rule/40 px-4 py-4 sm:px-5">
-            <input
-              autoFocus
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, tag, description…"
-              className="w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-base outline-none focus:border-terracotta"
-            />
-
-            <div className="mt-4 grid gap-3">
-              <label className="flex items-center justify-between gap-3">
-                <span className="small-caps text-[10px] text-ink-soft">dish type</span>
-                <select
-                  value={dishType}
-                  onChange={(e) => setDishType(e.target.value)}
-                  className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
+    <section>
+      {hasRecipes && (
+        <>
+          {/* Vibe / Gemini filter */}
+          <div className="paper-page rounded-[3px] px-4 py-4 sm:px-5">
+            <p className="small-caps text-[10px] text-terracotta">
+              ✦ ask the cook to narrow it down
+            </p>
+            <form onSubmit={runVibe} className="mt-2 flex gap-2">
+              <input
+                type="text"
+                value={vibe}
+                onChange={(e) => setVibe(e.target.value)}
+                placeholder="e.g. cozy rainy night · quick weeknight · impress my parents"
+                className="flex-1 bg-transparent border-b border-rule/60 py-2 text-sm font-serif italic outline-none focus:border-terracotta"
+                disabled={vibeLoading}
+              />
+              <button
+                type="submit"
+                disabled={vibeLoading || !vibe.trim()}
+                className="small-caps text-[10px] text-terracotta border border-terracotta/40 rounded-full px-3 py-1 hover:bg-terracotta hover:text-paper transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-terracotta"
+              >
+                {vibeLoading ? "thinking…" : "match"}
+              </button>
+            </form>
+            {vibeError && (
+              <p className="mt-2 text-[11px] text-destructive italic">{vibeError}</p>
+            )}
+            {vibeNote && vibeIds && (
+              <div className="mt-3 flex items-start justify-between gap-3">
+                <p className="text-[12px] font-serif italic text-ink-soft">
+                  “{vibeNote}”
+                </p>
+                <button
+                  type="button"
+                  onClick={clearVibe}
+                  className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta shrink-0"
                 >
-                  <option value="all">all types</option>
-                  {allTags.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  clear
+                </button>
+              </div>
+            )}
+          </div>
 
-              <label className="flex items-center justify-between gap-3">
-                <span className="small-caps text-[10px] text-ink-soft">prep length</span>
-                <select
-                  value={prepBucket}
-                  onChange={(e) => setPrepBucket(e.target.value)}
-                  className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
-                >
-                  {PREP_BUCKETS.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          {/* Filters */}
+          <div className="mt-4 paper-page rounded-[3px] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((o) => !o)}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+              aria-expanded={filtersOpen}
+            >
+              <span className="small-caps text-[11px] text-terracotta">
+                ⌕ search & filter
+                <span className="text-ink-soft/70">
+                  {" "}· {filtered.length} of {recipes.length}
+                </span>
+              </span>
+              <span
+                className={`text-terracotta text-xs transition-transform duration-300 ${
+                  filtersOpen ? "rotate-180" : ""
+                }`}
+              >
+                ▾
+              </span>
+            </button>
 
-              <div className="flex items-center justify-between gap-3">
-                <span className="small-caps text-[10px] text-ink-soft">min stars</span>
-                <div className="flex items-center gap-2">
-                  <StarRating value={minRating} onChange={setMinRating} size="sm" />
-                  {minRating > 0 && (
+            {filtersOpen && (
+              <div className="border-t border-rule/40 px-4 py-4 sm:px-5">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by name, tag, description…"
+                  className="w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-base outline-none focus:border-terracotta"
+                />
+
+                <div className="mt-4 grid gap-3">
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="small-caps text-[10px] text-ink-soft">dish type</span>
+                    <select
+                      value={dishType}
+                      onChange={(e) => setDishType(e.target.value)}
+                      className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
+                    >
+                      <option value="all">all types</option>
+                      {allTags.map((tg) => (
+                        <option key={tg} value={tg}>
+                          {tg}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="small-caps text-[10px] text-ink-soft">prep length</span>
+                    <select
+                      value={prepBucket}
+                      onChange={(e) => setPrepBucket(e.target.value)}
+                      className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
+                    >
+                      {PREP_BUCKETS.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="small-caps text-[10px] text-ink-soft">min stars</span>
+                    <div className="flex items-center gap-2">
+                      <StarRating value={minRating} onChange={setMinRating} size="sm" />
+                      {minRating > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setMinRating(0)}
+                          className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta"
+                        >
+                          any
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="small-caps text-[10px] text-ink-soft">sort by</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => {
+                        setSortBy(e.target.value as SortKey);
+                        if (e.target.value === "surprise") {
+                          setShuffleSeed(Math.floor(Math.random() * 1e6));
+                        }
+                      }}
+                      className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
+                    >
+                      <option value="surprise">surprise me (default)</option>
+                      <option value="quick">quickest first</option>
+                      <option value="top">top rated</option>
+                      <option value="newest">most recent</option>
+                      <option value="az">a → z</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between gap-2">
+                  {sortBy === "surprise" ? (
                     <button
                       type="button"
-                      onClick={() => setMinRating(0)}
-                      className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta"
+                      onClick={() => setShuffleSeed(Math.floor(Math.random() * 1e6))}
+                      className="small-caps text-[10px] text-terracotta hover:underline"
                     >
-                      any
+                      ↻ reshuffle
                     </button>
+                  ) : (
+                    <span />
                   )}
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
+                  >
+                    reset all
+                  </button>
                 </div>
               </div>
-
-              <label className="flex items-center justify-between gap-3">
-                <span className="small-caps text-[10px] text-ink-soft">sort by</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
-                >
-                  <option value="top">top rated</option>
-                  <option value="quick">quickest first</option>
-                  <option value="newest">most recent</option>
-                  <option value="az">a → z</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-2">
-              <p className="small-caps text-[10px] text-ink-soft">
-                {filtered.length === 0
-                  ? "nothing matches"
-                  : `${filtered.length} of ${recipes.length}`}
-              </p>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={pickForMe}
-                  disabled={filtered.length === 0}
-                  className="small-caps text-[10px] text-terracotta border border-terracotta/40 rounded-full px-3 py-1 hover:bg-terracotta hover:text-paper transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-terracotta"
-                >
-                  ✦ pick one for me
-                </button>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
-                >
-                  reset
-                </button>
-              </div>
-            </div>
-
-            {pickFlash && (
-              <p className="mt-2 text-center font-serif italic text-[13px] text-terracotta">
-                tonight: {pickFlash}…
-              </p>
             )}
+          </div>
+        </>
+      )}
 
-            <ul className="mt-3 max-h-[50vh] overflow-y-auto divide-y divide-rule/40 border-t border-rule/40">
-              {filtered.map((r) => {
-                const mins = parsePrepMinutes(r.prep_time);
-                return (
-                  <li key={r.id}>
-                    <Link
-                      to="/recipes/$id"
-                      params={{ id: r.id }}
-                      className="flex items-center justify-between gap-3 py-3 hover:bg-terracotta/5 px-1 rounded transition-colors"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-serif italic text-[15px] truncate">{r.title}</p>
-                        <p className="small-caps text-[9px] text-ink-soft/80 mt-0.5 truncate">
-                          {[r.tags[0], mins ? `${mins} min` : r.prep_time].filter(Boolean).join(" · ") || "—"}
-                        </p>
-                      </div>
-                      <StarRating value={r.rating ?? 0} readOnly size="sm" />
-                    </Link>
-                  </li>
-                );
-              })}
-              {filtered.length === 0 && (
-                <li className="py-6 text-center small-caps text-[10px] text-ink-soft/70">
-                  no recipes match these filters
-                </li>
-              )}
-            </ul>
+      {/* The library itself */}
+      <div className="mt-10">
+        {!hasRecipes ? (
+          <div className="text-center py-16 border border-dashed border-rule/60 rounded-md bg-paper-deep/30">
+            <p className="font-serif italic text-xl text-ink">
+              The first page of your library.
+            </p>
+            <p className="mt-2 text-sm text-ink-soft">
+              Clip a recipe above to begin.
+            </p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-center py-14 text-sm text-ink-soft italic">
+            no recipes match these filters
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-10">
+            {filtered.map((r, i) => (
+              <RecipeCard key={r.id} recipe={r} index={i} />
+            ))}
           </div>
         )}
       </div>
     </section>
   );
 }
-
-
-
