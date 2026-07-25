@@ -214,6 +214,10 @@ const en: Dict = {
   you: "you",
   cook_label: "the cook",
   open_arrow: "open →",
+  opening_message: "Good day. Tell me what you're in the mood for — a quick supper, something from the pantry, a dinner-party centerpiece — and I'll find a recipe from your book or suggest a new dish to try.",
+  with_filters_note: "(sticking to your filters: {summary})",
+  ignoring_filters_note: "(setting your filters aside)",
+
   // language
   lang_toggle_to_he: "עברית",
   lang_toggle_to_en: "English",
