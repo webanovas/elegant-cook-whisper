@@ -83,13 +83,26 @@ export function useRecipeImage(id: string, storedUrl: string | null): string | n
     }
     let objectUrl: string | null = null;
     let cancelled = false;
-    getRecipeImage(id).then((blob) => {
+
+    async function load() {
+      const blob = await getRecipeImage(id);
       if (cancelled || !blob) return;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
       objectUrl = URL.createObjectURL(blob);
       setUrl(objectUrl);
-    });
+    }
+    load();
+
+    // Re-load when a background image write finishes for this id.
+    const onUpdate = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: string }>).detail;
+      if (detail?.id === id) load();
+    };
+    window.addEventListener("gn:image-updated", onUpdate);
+
     return () => {
       cancelled = true;
+      window.removeEventListener("gn:image-updated", onUpdate);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [id, storedUrl]);
