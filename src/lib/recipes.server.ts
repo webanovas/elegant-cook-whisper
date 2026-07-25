@@ -226,6 +226,123 @@ ${pageText}`;
 
 }
 
+export interface ScannedRecipe extends ExtractedRecipe {
+  confidence: number; // 0-1
+  warnings: string[];
+}
+
+export async function extractRecipeFromImages(
+  images: string[], // data URLs or absolute https URLs
+): Promise<ScannedRecipe> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const prompt = `You are transcribing a recipe from photograph(s) of a page, screenshot, or handwritten note.
+Return ONLY a clean JSON object (no markdown fences, no commentary) with these exact keys:
+- title (string) — keep it in its original language.
+- description (short overview, 1-2 sentences, in the recipe's original language; "" if unclear)
+- prep_time (string like "15m"; "" if unknown)
+- cook_time (string like "30m"; "" if unknown)
+- servings (integer; guess a sensible default like 2 if unknown)
+- ingredients (array of objects with 'amount', 'unit', 'name'; empty strings if not specified) — FLAT list of every ingredient
+- instructions (array of clear step-by-step strings) — FLAT list of every step
+- tags (array of short tags like "Vegan", "Italian", "Quick")
+- food_style_image_prompt (a description in English for generating an aesthetic, editorial food photography image of this dish)
+- confidence (number between 0 and 1: how sure you are the transcription is faithful to the source. Use <0.6 if the image is blurry, cropped, in handwriting you struggled with, or missing sections.)
+- warnings (array of short strings describing anything uncertain — e.g. "amounts for step 2 were illegible", "cook time not visible", "ingredient list may be incomplete". Empty array if everything is clear.)
+
+If — and ONLY if — the recipe has clearly labelled multiple components, also return:
+- ingredient_sections and instruction_sections (same shape as before).
+
+If the image does not appear to contain a recipe at all, return { "title": "", "confidence": 0, "warnings": ["No recipe detected in the image."] } plus empty arrays for the other fields.`;
+
+  const content: Array<
+    { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }
+  > = [{ type: "text", text: prompt }];
+  images.forEach((url) => content.push({ type: "image_url", image_url: { url } }));
+
+  const res = await fetch(`${GATEWAY_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content }],
+    }),
+  });
+
+  if (res.status === 429) throw new Error("Rate limit reached, try again in a moment.");
+  if (res.status === 402)
+    throw new Error("AI credits exhausted. Add credits in your workspace billing.");
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`AI gateway error [${res.status}]: ${text.slice(0, 200)}`);
+  }
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const raw = data.choices?.[0]?.message?.content ?? "";
+  const cleaned = stripJsonFence(raw);
+  let parsed: Partial<ScannedRecipe> & { food_style_image_prompt?: string };
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error(
+      `Could not read a recipe from that image. (${(e as Error).message})`,
+    );
+  }
+
+  if (!parsed.title) {
+    throw new Error(
+      "No recipe detected in the image. Try a clearer photo of the recipe page.",
+    );
+  }
+
+  const iSections = Array.isArray(parsed.ingredient_sections)
+    ? parsed.ingredient_sections.filter((s) => s && Array.isArray(s.items))
+    : undefined;
+  const sSections = Array.isArray(parsed.instruction_sections)
+    ? parsed.instruction_sections.filter((s) => s && Array.isArray(s.steps))
+    : undefined;
+
+  const flatIngredients =
+    Array.isArray(parsed.ingredients) && parsed.ingredients.length > 0
+      ? parsed.ingredients
+      : iSections
+        ? iSections.flatMap((s) => s.items)
+        : [];
+  const flatInstructions =
+    Array.isArray(parsed.instructions) && parsed.instructions.length > 0
+      ? parsed.instructions
+      : sSections
+        ? sSections.flatMap((s) => s.steps)
+        : [];
+
+  const confidence =
+    typeof parsed.confidence === "number"
+      ? Math.max(0, Math.min(1, parsed.confidence))
+      : 0.5;
+
+  return {
+    title: parsed.title,
+    description: parsed.description ?? "",
+    prep_time: parsed.prep_time ?? "",
+    cook_time: parsed.cook_time ?? "",
+    servings: Number(parsed.servings) || 2,
+    ingredients: flatIngredients,
+    instructions: flatInstructions,
+    ingredient_sections: iSections && iSections.length > 0 ? iSections : undefined,
+    instruction_sections: sSections && sSections.length > 0 ? sSections : undefined,
+    tags: Array.isArray(parsed.tags) ? parsed.tags : [],
+    food_style_image_prompt:
+      parsed.food_style_image_prompt ?? parsed.title ?? "plated dish",
+    confidence,
+    warnings: Array.isArray(parsed.warnings) ? parsed.warnings.filter(Boolean) : [],
+  };
+}
+
 export async function generateHeroImage(prompt: string): Promise<string | null> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) return null;
