@@ -535,33 +535,11 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     <section>
       {hasRecipes && (
         <div className="mt-4 grid gap-4 md:grid-cols-[1fr_320px] items-start">
-          {/* Slider filters */}
-          <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-5">
-            <SliderRow
-              label={t("quickness")}
-              value={quickIdx}
-              max={QUICKNESS_STOPS.length - 1}
-              display={quicknessLabel(maxPrep, t)}
-              onChange={setQuickIdx}
-            />
+          {/* Ledger-style filters */}
+          <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-6">
+            <QuicknessTabs value={quickIdx} onChange={setQuickIdx} t={t} />
+            <RatingStars value={minRating} onChange={setMinRating} t={t} />
 
-            <SliderRow
-              label={t("rating_label")}
-              value={minRating}
-              max={5}
-              display={
-                minRating === 0
-                  ? t("rating_any")
-                  : t("rating_min").replace("{n}", String(minRating))
-              }
-              onChange={setMinRating}
-              renderTicks={(v) => (
-                <span className="text-terracotta tabular-nums text-[13px]">
-                  {"★".repeat(v)}
-                  <span className="text-ink/20">{"★".repeat(5 - v)}</span>
-                </span>
-              )}
-            />
 
             <div className="flex items-center justify-between gap-3 pt-1">
               <span className="small-caps text-[10px] text-ink-soft">
