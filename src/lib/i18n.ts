@@ -193,6 +193,7 @@ const en: Dict = {
   delete: "Delete",
   confirm_delete_recipe: "Delete this recipe from this device?",
   start_cook: "Start Cook Mode",
+  exit_cook: "Exit Cook Mode",
   sub: "Sub",
   substitute_loading: "Thinking of alternatives…",
   more_subs: "more options",
