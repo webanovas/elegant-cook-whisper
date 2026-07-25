@@ -178,7 +178,7 @@ Source URL: ${sourceUrl}
 Content:
 ${pageText}`;
 
-  const raw = await callGemini(prompt, "google/gemini-3.5-flash");
+  const raw = await callGemini(prompt, "google/gemini-2.5-flash-lite");
   const cleaned = stripJsonFence(raw);
   try {
     const parsed = JSON.parse(cleaned) as ExtractedRecipe;
