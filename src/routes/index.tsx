@@ -9,6 +9,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { useT, useLang } from "@/lib/i18n";
 import {
   extractRecipe,
+  generateRecipeImage,
   searchRecipesOnWeb,
   type WebRecipeResult,
 } from "@/lib/recipes.functions";
