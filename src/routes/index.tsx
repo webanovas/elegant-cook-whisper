@@ -41,10 +41,13 @@ function LibraryPage() {
 
       <ProudHeader count={recipes.length} />
 
-      <div className="mt-10 max-w-[760px] mx-auto">
-        <ImportCard />
+      <div className="mt-10 max-w-[1100px] mx-auto">
+        <div className="max-w-[760px] mx-auto">
+          <ImportCard />
+        </div>
 
         <FilterableGallery recipes={recipes} />
+
 
         <div className="mt-14 text-center">
           <Link
@@ -403,7 +406,6 @@ function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
 
 function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   const askVibe = useServerFn(filterRecipesByVibe);
-  const [query, setQuery] = useState("");
   const [minRating, setMinRating] = useState(0);
   const [dishType, setDishType] = useState<string>("all");
   const [prepBucket, setPrepBucket] = useState<string>("all");
@@ -414,7 +416,6 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   const [vibeError, setVibeError] = useState<string | null>(null);
   const [vibeIds, setVibeIds] = useState<string[] | null>(null);
   const [vibeNote, setVibeNote] = useState<string | null>(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -422,7 +423,6 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [recipes]);
 
-  // Reset a stale AI pick when the underlying library changes.
   useEffect(() => {
     if (vibeIds && vibeIds.some((id) => !recipes.find((r) => r.id === id))) {
       setVibeIds(null);
@@ -432,21 +432,15 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   }, [recipes.length]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     const bucket = PREP_BUCKETS.find((b) => b.id === prepBucket) ?? PREP_BUCKETS[0];
     const base = recipes.filter((r) => {
       if (minRating > 0 && (r.rating ?? 0) < minRating) return false;
       if (dishType !== "all" && !r.tags.some((t) => t.toLowerCase() === dishType.toLowerCase()))
         return false;
       if (prepBucket !== "all" && !bucket.test(parsePrepMinutes(r.prep_time))) return false;
-      if (!q) return true;
-      const hay = [r.title, r.description ?? "", r.tags.join(" ")]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
+      return true;
     });
 
-    // Gemini vibe overrides sort with its own ordered ids (intersected with filters).
     if (vibeIds && vibeIds.length > 0) {
       const map = new Map(base.map((r) => [r.id, r]));
       return vibeIds.map((id) => map.get(id)).filter(Boolean) as Recipe[];
@@ -466,11 +460,10 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     } else if (sortBy === "newest") {
       sorted.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
     } else {
-      // surprise (default) — random with a stable seed
       return shuffleWithSeed(sorted, shuffleSeed);
     }
     return sorted;
-  }, [recipes, query, minRating, dishType, prepBucket, sortBy, shuffleSeed, vibeIds]);
+  }, [recipes, minRating, dishType, prepBucket, sortBy, shuffleSeed, vibeIds]);
 
   async function runVibe(e: React.FormEvent) {
     e.preventDefault();
@@ -511,7 +504,6 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   }
 
   function reset() {
-    setQuery("");
     setMinRating(0);
     setDishType("all");
     setPrepBucket("all");
@@ -521,12 +513,78 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   }
 
   const hasRecipes = recipes.length > 0;
+  const anyFilterActive =
+    minRating > 0 || dishType !== "all" || prepBucket !== "all" || sortBy !== "surprise" || !!vibeIds;
+
+  const quicknessChips: { id: SortKey | "bucket-quick"; label: string; active: boolean; onClick: () => void }[] = [
+    { id: "surprise", label: "any speed", active: sortBy === "surprise" && prepBucket === "all", onClick: () => { setSortBy("surprise"); setPrepBucket("all"); } },
+    { id: "quick", label: "under 15 min", active: prepBucket === "quick", onClick: () => setPrepBucket(prepBucket === "quick" ? "all" : "quick") },
+    { id: "bucket-quick", label: "15 – 30 min", active: prepBucket === "medium", onClick: () => setPrepBucket(prepBucket === "medium" ? "all" : "medium") },
+    { id: "newest", label: "30 – 60 min", active: prepBucket === "long", onClick: () => setPrepBucket(prepBucket === "long" ? "all" : "long") },
+    { id: "top", label: "quickest first", active: sortBy === "quick", onClick: () => setSortBy(sortBy === "quick" ? "surprise" : "quick") },
+  ];
 
   return (
     <section>
       {hasRecipes && (
-        <>
-          {/* Vibe / Gemini filter */}
+        <div className="mt-4 grid gap-4 md:grid-cols-[1fr_320px] items-start">
+          {/* Chip filters */}
+          <div className="paper-page rounded-[3px] px-4 py-4 sm:px-5 space-y-4">
+            <FilterRow label="quickness">
+              {quicknessChips.map((c) => (
+                <Chip key={c.id} active={c.active} onClick={c.onClick}>{c.label}</Chip>
+              ))}
+            </FilterRow>
+
+            <FilterRow label="rating">
+              <Chip active={minRating === 0} onClick={() => setMinRating(0)}>any</Chip>
+              {[3, 4, 5].map((n) => (
+                <Chip key={n} active={minRating === n} onClick={() => setMinRating(minRating === n ? 0 : n)}>
+                  {"★".repeat(n)}{n < 5 ? "+" : ""}
+                </Chip>
+              ))}
+              <Chip active={sortBy === "top"} onClick={() => setSortBy(sortBy === "top" ? "surprise" : "top")}>
+                top rated first
+              </Chip>
+            </FilterRow>
+
+            {allTags.length > 0 && (
+              <FilterRow label="genre">
+                <Chip active={dishType === "all"} onClick={() => setDishType("all")}>all</Chip>
+                {allTags.slice(0, 20).map((tg) => (
+                  <Chip key={tg} active={dishType === tg} onClick={() => setDishType(dishType === tg ? "all" : tg)}>
+                    {tg}
+                  </Chip>
+                ))}
+              </FilterRow>
+            )}
+
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <span className="small-caps text-[10px] text-ink-soft">
+                {filtered.length} of {recipes.length}
+                {sortBy === "surprise" && !vibeIds && (
+                  <button
+                    type="button"
+                    onClick={() => setShuffleSeed(Math.floor(Math.random() * 1e6))}
+                    className="ml-3 text-terracotta hover:underline"
+                  >
+                    ↻ reshuffle
+                  </button>
+                )}
+              </span>
+              {anyFilterActive && (
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
+                >
+                  reset all
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Ask the cook */}
           <div className="paper-page rounded-[3px] px-4 py-4 sm:px-5">
             <p className="small-caps text-[10px] text-terracotta">
               ✦ ask the cook to narrow it down
@@ -536,8 +594,8 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
                 type="text"
                 value={vibe}
                 onChange={(e) => setVibe(e.target.value)}
-                placeholder="e.g. cozy rainy night · quick weeknight · impress my parents"
-                className="flex-1 bg-transparent border-b border-rule/60 py-2 text-sm font-serif italic outline-none focus:border-terracotta"
+                placeholder="cozy rainy night · impress my parents"
+                className="flex-1 min-w-0 bg-transparent border-b border-rule/60 py-2 text-sm font-serif italic outline-none focus:border-terracotta"
                 disabled={vibeLoading}
               />
               <button
@@ -566,137 +624,11 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
               </div>
             )}
           </div>
-
-          {/* Filters */}
-          <div className="mt-4 paper-page rounded-[3px] overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setFiltersOpen((o) => !o)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
-              aria-expanded={filtersOpen}
-            >
-              <span className="small-caps text-[11px] text-terracotta">
-                ⌕ search & filter
-                <span className="text-ink-soft/70">
-                  {" "}· {filtered.length} of {recipes.length}
-                </span>
-              </span>
-              <span
-                className={`text-terracotta text-xs transition-transform duration-300 ${
-                  filtersOpen ? "rotate-180" : ""
-                }`}
-              >
-                ▾
-              </span>
-            </button>
-
-            {filtersOpen && (
-              <div className="border-t border-rule/40 px-4 py-4 sm:px-5">
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name, tag, description…"
-                  className="w-full bg-transparent border-b border-rule/60 py-2 font-serif italic text-base outline-none focus:border-terracotta"
-                />
-
-                <div className="mt-4 grid gap-3">
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="small-caps text-[10px] text-ink-soft">dish type</span>
-                    <select
-                      value={dishType}
-                      onChange={(e) => setDishType(e.target.value)}
-                      className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
-                    >
-                      <option value="all">all types</option>
-                      {allTags.map((tg) => (
-                        <option key={tg} value={tg}>
-                          {tg}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="small-caps text-[10px] text-ink-soft">prep length</span>
-                    <select
-                      value={prepBucket}
-                      onChange={(e) => setPrepBucket(e.target.value)}
-                      className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
-                    >
-                      {PREP_BUCKETS.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="small-caps text-[10px] text-ink-soft">min stars</span>
-                    <div className="flex items-center gap-2">
-                      <StarRating value={minRating} onChange={setMinRating} size="sm" />
-                      {minRating > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setMinRating(0)}
-                          className="small-caps text-[9px] text-ink-soft/70 hover:text-terracotta"
-                        >
-                          any
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="small-caps text-[10px] text-ink-soft">sort by</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => {
-                        setSortBy(e.target.value as SortKey);
-                        if (e.target.value === "surprise") {
-                          setShuffleSeed(Math.floor(Math.random() * 1e6));
-                        }
-                      }}
-                      className="bg-transparent border-b border-rule/60 text-sm py-1 font-serif italic outline-none focus:border-terracotta max-w-[60%]"
-                    >
-                      <option value="surprise">surprise me (default)</option>
-                      <option value="quick">quickest first</option>
-                      <option value="top">top rated</option>
-                      <option value="newest">most recent</option>
-                      <option value="az">a → z</option>
-                    </select>
-                  </label>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-2">
-                  {sortBy === "surprise" ? (
-                    <button
-                      type="button"
-                      onClick={() => setShuffleSeed(Math.floor(Math.random() * 1e6))}
-                      className="small-caps text-[10px] text-terracotta hover:underline"
-                    >
-                      ↻ reshuffle
-                    </button>
-                  ) : (
-                    <span />
-                  )}
-                  <button
-                    type="button"
-                    onClick={reset}
-                    className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
-                  >
-                    reset all
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
+        </div>
       )}
 
       {/* The library itself */}
-      <div className="mt-10">
+      <div className="mt-8">
         {!hasRecipes ? (
           <div className="text-center py-16 border border-dashed border-rule/60 rounded-md bg-paper-deep/30">
             <p className="font-serif italic text-xl text-ink">
@@ -711,7 +643,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
             no recipes match these filters
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-5 gap-y-8">
             {filtered.map((r, i) => (
               <RecipeCard key={r.id} recipe={r} index={i} />
             ))}
@@ -721,3 +653,39 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     </section>
   );
 }
+
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="small-caps text-[10px] text-ink-soft w-full sm:w-[70px] shrink-0">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`small-caps text-[10px] px-2.5 py-1 rounded-full border transition-colors ${
+        active
+          ? "bg-terracotta text-paper border-terracotta"
+          : "bg-transparent text-ink-soft border-rule/60 hover:border-terracotta hover:text-terracotta"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
