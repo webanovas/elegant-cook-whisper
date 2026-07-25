@@ -309,15 +309,20 @@ function RecipeDetail() {
           </div>
         </motion.div>
 
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[392px] z-50">
-          <Link
-            to="/recipes/$id/cook"
-            params={{ id: recipe.id }}
-            className="w-full bg-foreground text-background py-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 shadow-xl ring-1 ring-foreground/10"
-          >
-            {t("start_cook")}
-          </Link>
-        </div>
+        {!cookMode && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[392px] z-50">
+            <button
+              type="button"
+              onClick={() => {
+                setCookMode(true);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="w-full bg-foreground text-background py-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 shadow-xl ring-1 ring-foreground/10"
+            >
+              {t("start_cook")}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
