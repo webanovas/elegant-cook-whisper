@@ -298,6 +298,11 @@ const he: Dict = {
   quickness_90: "עד שעה וחצי",
   rating_any: "כל דירוג",
   rating_min: "לפחות {n}★",
+  quick_any: "הכל",
+  min_short: "ד׳",
+  hr_short: "ש׳",
+  and_up: "ומעלה",
+
   reset_all: "אפס הכל",
   ask_narrow: "✦ תשאל את השף לסנן",
   ask_placeholder_vibe: "ערב גשום ונעים · להרשים את ההורים",
