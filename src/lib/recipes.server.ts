@@ -98,6 +98,7 @@ export async function fetchPageText(url: string): Promise<string> {
             url,
             formats: ["markdown"],
             onlyMainContent: true,
+            maxAge: 86400000, // serve cached scrape (<24h) — near-instant on repeat clips
           }),
         },
       );
@@ -177,7 +178,7 @@ Source URL: ${sourceUrl}
 Content:
 ${pageText}`;
 
-  const raw = await callGemini(prompt, "google/gemini-3.5-flash");
+  const raw = await callGemini(prompt, "google/gemini-2.5-flash-lite");
   const cleaned = stripJsonFence(raw);
   try {
     const parsed = JSON.parse(cleaned) as ExtractedRecipe;
