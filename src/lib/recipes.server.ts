@@ -98,6 +98,7 @@ export async function fetchPageText(url: string): Promise<string> {
             url,
             formats: ["markdown"],
             onlyMainContent: true,
+            maxAge: 86400000, // serve cached scrape (<24h) — near-instant on repeat clips
           }),
         },
       );
