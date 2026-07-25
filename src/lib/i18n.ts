@@ -405,6 +405,7 @@ const he: Dict = {
   delete: "מחק",
   confirm_delete_recipe: "למחוק את המתכון הזה מהמכשיר?",
   start_cook: "התחל מצב בישול",
+  exit_cook: "צא ממצב בישול",
   sub: "תחליף",
   substitute_loading: "חושב על חלופות…",
   more_subs: "עוד אפשרויות",
