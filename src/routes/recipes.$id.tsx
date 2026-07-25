@@ -169,8 +169,49 @@ function RecipeDetail() {
             </div>
           </div>
 
+          {scanNotice && (
+            <div className="mt-6 rounded border border-terracotta/40 bg-terracotta/5 p-3 text-[12px] text-ink">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="small-caps text-[10px] text-terracotta font-semibold">
+                    {scanNotice.confidence < 0.6
+                      ? t("scan_low_conf")
+                      : t("scan_medium_conf")}
+                  </p>
+                  <p className="mt-1 italic">{t("scan_review_hint")}</p>
+                  {scanNotice.warnings.length > 0 && (
+                    <ul className="mt-2 list-disc ps-4 space-y-0.5">
+                      {scanNotice.warnings.map((w, i) => (
+                        <li key={i} className="text-ink-soft">
+                          {w}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={dismissScanNotice}
+                  aria-label={t("close")}
+                  className="text-ink-soft/60 hover:text-terracotta text-lg leading-none px-1"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
           <section className="py-8">
-            <h3 className="font-serif text-xl mb-6">{t("ingredients")}</h3>
+            <div className="flex items-baseline justify-between mb-6">
+              <h3 className="font-serif text-xl">{t("ingredients")}</h3>
+              <button
+                type="button"
+                onClick={onAddAllToGrocery}
+                className="small-caps text-[10px] text-terracotta border border-terracotta/40 rounded-full px-3 py-1 hover:bg-terracotta hover:text-paper transition-colors"
+              >
+                {addedAll ? `✓ ${t("added")}` : `🛒 ${t("add_all_grocery")}`}
+              </button>
+            </div>
             {iSections && iSections.length > 0 ? (
               <div className="space-y-8">
                 {iSections.map((sec, si) => (
