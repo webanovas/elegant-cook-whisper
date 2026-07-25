@@ -38,13 +38,12 @@ export const extractRecipe = createServerFn({ method: "POST" })
     z.object({ url: z.string().url("Please enter a valid URL") }).parse(input),
   )
   .handler(async ({ data }): Promise<ExtractedRecipe> => {
-    const { fetchPageText, extractRecipeFromText, generateHeroImage } = await import(
-      "./recipes.server"
-    );
+    const { fetchPageText, extractRecipeFromText } = await import("./recipes.server");
     const text = await fetchPageText(data.url);
     const extracted = await extractRecipeFromText(text, data.url);
-    const imageUrl = await generateHeroImage(extracted.food_style_image_prompt);
 
+    // Hero image is generated separately (generateRecipeImage) so clipping
+    // returns as fast as possible — image gen is the slowest step.
     return {
       title: extracted.title,
       description: extracted.description,
@@ -56,11 +55,21 @@ export const extractRecipe = createServerFn({ method: "POST" })
       ingredient_sections: extracted.ingredient_sections,
       instruction_sections: extracted.instruction_sections,
       tags: extracted.tags,
-      image_url: imageUrl,
+      image_url: null,
       image_prompt: extracted.food_style_image_prompt,
       source_url: data.url,
     };
 });
+
+export const generateRecipeImage = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ prompt: z.string().min(1).max(1000) }).parse(input),
+  )
+  .handler(async ({ data }): Promise<{ image_url: string | null }> => {
+    const { generateHeroImage } = await import("./recipes.server");
+    const image_url = await generateHeroImage(data.prompt);
+    return { image_url };
+  });
 
 export interface ScannedRecipeResult extends ExtractedRecipe {
   confidence: number;
