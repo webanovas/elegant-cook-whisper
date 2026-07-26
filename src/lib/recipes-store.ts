@@ -17,6 +17,20 @@ export interface InstructionSection {
   steps: string[];
 }
 
+export interface ChefHint {
+  target: "ingredient" | "step";
+  key: string; // "sectionIndex:itemIndex", sectionIndex is -1 for flat lists
+  text: string;
+}
+
+export interface ChefConsultation {
+  id: string;
+  request: string;
+  summary: string;
+  hints: ChefHint[];
+  created_at: string;
+}
+
 export interface Recipe {
   id: string;
   title: string;
@@ -35,6 +49,13 @@ export interface Recipe {
   created_at: string;
   cookbook_id: string;
   rating?: number;
+  // Personal touches — never overwrite the original recipe fields.
+  personal_note?: string;
+  ingredient_notes?: Record<string, string>;
+  step_notes?: Record<string, string>;
+  ingredient_overrides?: Record<string, string>;
+  step_overrides?: Record<string, string>;
+  chef_consultations?: ChefConsultation[];
 }
 
 
@@ -200,6 +221,71 @@ export function setRecipeRating(id: string, rating: number) {
   const all = readRaw();
   const next = all.map((r) => (r.id === id ? { ...r, rating: clamped } : r));
   writeRaw(next);
+}
+
+function updateRecipe(id: string, patch: (r: Recipe) => Recipe) {
+  const all = readRaw();
+  const next = all.map((r) => (r.id === id ? patch(r) : r));
+  writeRaw(next);
+}
+
+export function setPersonalNote(id: string, note: string) {
+  updateRecipe(id, (r) => ({ ...r, personal_note: note.trim() || undefined }));
+}
+
+export function setIngredientNote(id: string, key: string, note: string) {
+  updateRecipe(id, (r) => {
+    const map = { ...(r.ingredient_notes ?? {}) };
+    if (note.trim()) map[key] = note.trim();
+    else delete map[key];
+    return { ...r, ingredient_notes: Object.keys(map).length ? map : undefined };
+  });
+}
+
+export function setStepNote(id: string, key: string, note: string) {
+  updateRecipe(id, (r) => {
+    const map = { ...(r.step_notes ?? {}) };
+    if (note.trim()) map[key] = note.trim();
+    else delete map[key];
+    return { ...r, step_notes: Object.keys(map).length ? map : undefined };
+  });
+}
+
+export function setIngredientOverride(id: string, key: string, text: string) {
+  updateRecipe(id, (r) => {
+    const map = { ...(r.ingredient_overrides ?? {}) };
+    if (text.trim()) map[key] = text.trim();
+    else delete map[key];
+    return { ...r, ingredient_overrides: Object.keys(map).length ? map : undefined };
+  });
+}
+
+export function setStepOverride(id: string, key: string, text: string) {
+  updateRecipe(id, (r) => {
+    const map = { ...(r.step_overrides ?? {}) };
+    if (text.trim()) map[key] = text.trim();
+    else delete map[key];
+    return { ...r, step_overrides: Object.keys(map).length ? map : undefined };
+  });
+}
+
+export function addChefConsultation(id: string, c: Omit<ChefConsultation, "id" | "created_at">) {
+  updateRecipe(id, (r) => {
+    const item: ChefConsultation = {
+      ...c,
+      id: `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+      created_at: new Date().toISOString(),
+    };
+    const list = [item, ...(r.chef_consultations ?? [])].slice(0, 6);
+    return { ...r, chef_consultations: list };
+  });
+}
+
+export function removeChefConsultation(id: string, consultId: string) {
+  updateRecipe(id, (r) => {
+    const list = (r.chef_consultations ?? []).filter((c) => c.id !== consultId);
+    return { ...r, chef_consultations: list.length ? list : undefined };
+  });
 }
 
 export function deleteRecipeLocal(id: string) {
