@@ -1,15 +1,30 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { deleteRecipeLocal, setRecipeRating, useRecipe } from "@/lib/recipes-store";
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  addChefConsultation,
+  deleteRecipeLocal,
+  removeChefConsultation,
+  setIngredientNote,
+  setIngredientOverride,
+  setPersonalNote,
+  setRecipeRating,
+  setStepNote,
+  setStepOverride,
+  useRecipe,
+  type Recipe,
+} from "@/lib/recipes-store";
 import { useRecipeImage } from "@/lib/recipe-images";
 import { PortionScaler } from "@/components/PortionScaler";
 import { IngredientRow } from "@/components/IngredientRow";
 import { StarRating } from "@/components/StarRating";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 import { TimedText } from "@/components/TimedText";
 import { addGroceryItems } from "@/lib/grocery-store";
 import { scaleAmount } from "@/lib/scale";
+import { consultChefOnRecipe } from "@/lib/recipe-consult.functions";
+import type { Ingredient } from "@/lib/recipes.functions";
 
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
@@ -24,9 +39,12 @@ function RecipeDetail() {
   const recipe = useRecipe(id);
   const router = useRouter();
   const t = useT();
+  const lang = useLang();
   const [servings, setServings] = useState(recipe?.servings || 2);
   const [addedAll, setAddedAll] = useState(false);
   const [cookMode, setCookMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [consultOpen, setConsultOpen] = useState(false);
   const [scanNotice, setScanNotice] = useState<
     { confidence: number; warnings: string[] } | null
   >(null);
@@ -41,6 +59,20 @@ function RecipeDetail() {
       /* ignore */
     }
   }, [recipe]);
+
+  // Build a map of chef hints keyed by "target:sectionIndex:itemIndex" for fast lookup.
+  const hintMap = useMemo(() => {
+    const m = new Map<string, { text: string; consultId: string }[]>();
+    (recipe?.chef_consultations ?? []).forEach((c) => {
+      c.hints.forEach((h) => {
+        const k = `${h.target}:${h.key}`;
+        const arr = m.get(k) ?? [];
+        arr.push({ text: h.text, consultId: c.id });
+        m.set(k, arr);
+      });
+    });
+    return m;
+  }, [recipe?.chef_consultations]);
 
   function dismissScanNotice() {
     if (!recipe) return;
@@ -90,8 +122,6 @@ function RecipeDetail() {
     window.setTimeout(() => setAddedAll(false), 1600);
   }
 
-
-
   const iSections = recipe.ingredient_sections;
   const sSections = recipe.instruction_sections;
 
@@ -135,7 +165,6 @@ function RecipeDetail() {
           >
             ←
           </Link>
-
         </div>
 
         <motion.div
@@ -157,14 +186,69 @@ function RecipeDetail() {
               {recipe.description}
             </p>
           )}
-          <div className="mb-6 flex items-center gap-3">
+          <div className="mb-4 flex items-center gap-3 flex-wrap">
             <span className="small-caps text-[10px] text-ink-soft">{t("your_rating")}</span>
             <StarRating
               value={recipe.rating ?? 0}
               onChange={(v) => setRecipeRating(recipe.id, v)}
               size="md"
             />
+            <div className="ms-auto flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditMode((v) => !v)}
+                className={`small-caps text-[10px] rounded-full px-3 py-1 border transition-colors ${
+                  editMode
+                    ? "bg-foreground text-background border-foreground"
+                    : "border-ink-soft/40 text-ink-soft hover:border-terracotta hover:text-terracotta"
+                }`}
+              >
+                {editMode ? `✓ ${t("done_editing")}` : `✎ ${t("edit_recipe")}`}
+              </button>
+            </div>
           </div>
+
+          {/* Chef consult button */}
+          <button
+            type="button"
+            onClick={() => setConsultOpen(true)}
+            className="w-full mb-6 rounded-lg border border-terracotta/40 bg-terracotta/5 px-4 py-3 text-start hover:bg-terracotta/10 transition-colors"
+          >
+            <p className="small-caps text-[10px] text-terracotta font-semibold">✦ {t("chef_note")}</p>
+            <p className="text-sm font-serif italic text-ink mt-0.5">
+              {t("consult_chef")}
+            </p>
+          </button>
+
+          {/* Chef consultations */}
+          {(recipe.chef_consultations ?? []).map((c) => (
+            <div
+              key={c.id}
+              className="mb-4 rounded border border-terracotta/40 bg-paper/40 p-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="small-caps text-[10px] text-terracotta font-semibold">
+                    ✦ {t("chef_note")} · <span className="italic normal-case tracking-normal text-ink-soft">{c.request}</span>
+                  </p>
+                  <p className="mt-1 text-[13px] leading-relaxed text-ink whitespace-pre-wrap">
+                    {c.summary}
+                  </p>
+                  {c.hints.length === 0 && (
+                    <p className="mt-1 text-[11px] italic text-ink-soft">{t("no_hints")}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeChefConsultation(recipe.id, c.id)}
+                  aria-label={t("dismiss_consult")}
+                  className="text-ink-soft/60 hover:text-terracotta text-lg leading-none px-1 shrink-0"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))}
 
           <div className="flex justify-between py-6 border-y border-border">
             <MetaCell label={t("prep")} value={recipe.prep_time || "—"} />
@@ -178,6 +262,9 @@ function RecipeDetail() {
               <PortionScaler servings={servings} onChange={setServings} />
             </div>
           </div>
+
+          {/* Personal note */}
+          <PersonalNoteBlock recipe={recipe} editMode={editMode} />
 
           {scanNotice && (
             <div className="mt-6 rounded border border-terracotta/40 bg-terracotta/5 p-3 text-[12px] text-ink">
@@ -231,12 +318,15 @@ function RecipeDetail() {
                     </p>
                     <ul className="space-y-4">
                       {sec.items.map((ing, i) => (
-                        <IngredientRow
+                        <IngredientLine
                           key={i}
+                          recipe={recipe}
                           ingredient={ing}
-                          originalServings={recipe.servings || 2}
+                          sectionIndex={si}
+                          itemIndex={i}
                           currentServings={servings}
-                          recipeTitle={recipe.title}
+                          editMode={editMode}
+                          hints={hintMap.get(`ingredient:${si}:${i}`) ?? []}
                         />
                       ))}
                     </ul>
@@ -248,12 +338,15 @@ function RecipeDetail() {
             ) : (
               <ul className="space-y-4">
                 {recipe.ingredients.map((ing, i) => (
-                  <IngredientRow
+                  <IngredientLine
                     key={i}
+                    recipe={recipe}
                     ingredient={ing}
-                    originalServings={recipe.servings || 2}
+                    sectionIndex={-1}
+                    itemIndex={i}
                     currentServings={servings}
-                    recipeTitle={recipe.title}
+                    editMode={editMode}
+                    hints={hintMap.get(`ingredient:-1:${i}`) ?? []}
                   />
                 ))}
               </ul>
@@ -271,7 +364,16 @@ function RecipeDetail() {
                     </p>
                     <div className="space-y-8">
                       {sec.steps.map((step, i) => (
-                        <StepLine key={i} n={i + 1} text={step} />
+                        <StepBlock
+                          key={i}
+                          recipe={recipe}
+                          n={i + 1}
+                          text={step}
+                          sectionIndex={si}
+                          itemIndex={i}
+                          editMode={editMode}
+                          hints={hintMap.get(`step:${si}:${i}`) ?? []}
+                        />
                       ))}
                     </div>
                   </div>
@@ -280,7 +382,16 @@ function RecipeDetail() {
             ) : (
               <div className="space-y-8">
                 {recipe.instructions.map((step, i) => (
-                  <StepLine key={i} n={i + 1} text={step} />
+                  <StepBlock
+                    key={i}
+                    recipe={recipe}
+                    n={i + 1}
+                    text={step}
+                    sectionIndex={-1}
+                    itemIndex={i}
+                    editMode={editMode}
+                    hints={hintMap.get(`step:-1:${i}`) ?? []}
+                  />
                 ))}
               </div>
             )}
@@ -323,12 +434,208 @@ function RecipeDetail() {
             </button>
           </div>
         )}
+
+        <AnimatePresence>
+          {consultOpen && (
+            <ConsultModal
+              recipe={recipe}
+              lang={lang}
+              onClose={() => setConsultOpen(false)}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 }
 
-function StepLine({ n, text }: { n: number; text: string }) {
+/* --- Personal note --- */
+function PersonalNoteBlock({ recipe, editMode }: { recipe: Recipe; editMode: boolean }) {
+  const t = useT();
+  const [value, setValue] = useState(recipe.personal_note ?? "");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setValue(recipe.personal_note ?? "");
+  }, [recipe.personal_note]);
+
+  const hasNote = !!(recipe.personal_note && recipe.personal_note.trim());
+
+  if (!editMode && !hasNote) return null;
+
+  return (
+    <div className="mt-6 rounded border border-dashed border-terracotta/40 bg-paper/30 p-3">
+      <p className="small-caps text-[10px] text-terracotta font-semibold mb-1">
+        {t("personal_note_label")}
+      </p>
+      {editMode ? (
+        <>
+          <textarea
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={() => setPersonalNote(recipe.id, value)}
+            placeholder={t("personal_note_ph")}
+            rows={3}
+            className="w-full bg-transparent text-[13px] leading-relaxed text-ink italic outline-none resize-none placeholder:text-ink-soft/50"
+          />
+          {open && null}
+        </>
+      ) : (
+        <p className="text-[13px] leading-relaxed text-ink italic whitespace-pre-wrap">
+          {recipe.personal_note}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* --- Ingredient line: wraps IngredientRow with notes/overrides/hints --- */
+function IngredientLine({
+  recipe,
+  ingredient,
+  sectionIndex,
+  itemIndex,
+  currentServings,
+  editMode,
+  hints,
+}: {
+  recipe: Recipe;
+  ingredient: Ingredient;
+  sectionIndex: number;
+  itemIndex: number;
+  currentServings: number;
+  editMode: boolean;
+  hints: { text: string; consultId: string }[];
+}) {
+  const t = useT();
+  const key = `${sectionIndex}:${itemIndex}`;
+  const override = recipe.ingredient_overrides?.[key];
+  const note = recipe.ingredient_notes?.[key];
+  const [overrideDraft, setOverrideDraft] = useState(override ?? "");
+  const [noteDraft, setNoteDraft] = useState(note ?? "");
+  const [showOriginal, setShowOriginal] = useState(false);
+
+  useEffect(() => {
+    setOverrideDraft(override ?? "");
+  }, [override]);
+  useEffect(() => {
+    setNoteDraft(note ?? "");
+  }, [note]);
+
+  const effectiveIngredient: Ingredient = override
+    ? { amount: "", unit: "", name: override }
+    : ingredient;
+
+  return (
+    <>
+      <IngredientRow
+        ingredient={effectiveIngredient}
+        originalServings={recipe.servings || 2}
+        currentServings={currentServings}
+        recipeTitle={recipe.title}
+      />
+      {override && !editMode && (
+        <li className="list-none -mt-3 ps-1">
+          <button
+            type="button"
+            onClick={() => setShowOriginal((v) => !v)}
+            className="text-[10px] uppercase tracking-widest text-ink-soft/70 hover:text-terracotta"
+          >
+            {showOriginal ? t("hide_original") : `· ${t("edited_mark")} · ${t("show_original")}`}
+          </button>
+          {showOriginal && (
+            <p className="text-[12px] italic text-ink-soft mt-1">
+              {t("original_short")}:{" "}
+              <span dir="ltr">
+                {ingredient.amount} {ingredient.unit} {ingredient.name}
+              </span>
+            </p>
+          )}
+        </li>
+      )}
+      {note && !editMode && (
+        <li className="list-none -mt-3 ps-1">
+          <p className="text-[12px] italic text-ink-soft">
+            <span className="small-caps text-[9px] text-terracotta me-1">{t("your_note")}:</span>
+            {note}
+          </p>
+        </li>
+      )}
+      {hints.map((h, i) => (
+        <li key={i} className="list-none -mt-3 ps-1">
+          <p className="text-[12px] italic text-terracotta">
+            <span className="small-caps text-[9px] font-semibold me-1">✦ {t("chef_note")}:</span>
+            {h.text}
+          </p>
+        </li>
+      ))}
+      {editMode && (
+        <li className="list-none -mt-2 ps-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              value={overrideDraft}
+              onChange={(e) => setOverrideDraft(e.target.value)}
+              onBlur={() => setIngredientOverride(recipe.id, key, overrideDraft)}
+              placeholder={t("edit_ing_ph")}
+              className="flex-1 bg-transparent border-b border-dashed border-ink-soft/30 focus:border-terracotta text-[13px] outline-none py-1"
+            />
+            {override && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOverrideDraft("");
+                  setIngredientOverride(recipe.id, key, "");
+                }}
+                className="text-[10px] uppercase tracking-wider text-ink-soft hover:text-terracotta"
+              >
+                ↺ {t("revert")}
+              </button>
+            )}
+          </div>
+          <input
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            onBlur={() => setIngredientNote(recipe.id, key, noteDraft)}
+            placeholder={t("ing_note_ph")}
+            className="w-full bg-transparent border-b border-dashed border-ink-soft/30 focus:border-terracotta text-[13px] italic outline-none py-1 placeholder:text-ink-soft/40"
+          />
+        </li>
+      )}
+    </>
+  );
+}
+
+/* --- Step block --- */
+function StepBlock({
+  recipe,
+  n,
+  text,
+  sectionIndex,
+  itemIndex,
+  editMode,
+  hints,
+}: {
+  recipe: Recipe;
+  n: number;
+  text: string;
+  sectionIndex: number;
+  itemIndex: number;
+  editMode: boolean;
+  hints: { text: string; consultId: string }[];
+}) {
+  const t = useT();
+  const key = `${sectionIndex}:${itemIndex}`;
+  const override = recipe.step_overrides?.[key];
+  const note = recipe.step_notes?.[key];
+  const [overrideDraft, setOverrideDraft] = useState(override ?? "");
+  const [noteDraft, setNoteDraft] = useState(note ?? "");
+  const [showOriginal, setShowOriginal] = useState(false);
+
+  useEffect(() => setOverrideDraft(override ?? ""), [override]);
+  useEffect(() => setNoteDraft(note ?? ""), [note]);
+
+  const displayText = override ?? text;
+
   return (
     <div className="flex gap-4">
       <span
@@ -337,10 +644,186 @@ function StepLine({ n, text }: { n: number; text: string }) {
       >
         {String(n).padStart(2, "0")}
       </span>
-      <p className="text-sm leading-relaxed text-pretty">
-        <TimedText text={text} />
-      </p>
+      <div className="flex-1 space-y-2">
+        <p className="text-sm leading-relaxed text-pretty">
+          <TimedText text={displayText} />
+        </p>
+        {override && !editMode && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowOriginal((v) => !v)}
+              className="text-[10px] uppercase tracking-widest text-ink-soft/70 hover:text-terracotta"
+            >
+              {showOriginal ? t("hide_original") : `· ${t("edited_mark")} · ${t("show_original")}`}
+            </button>
+            {showOriginal && (
+              <p className="text-[12px] italic text-ink-soft mt-1">
+                {t("original_short")}: {text}
+              </p>
+            )}
+          </div>
+        )}
+        {note && !editMode && (
+          <p className="text-[12px] italic text-ink-soft">
+            <span className="small-caps text-[9px] text-terracotta me-1">{t("your_note")}:</span>
+            {note}
+          </p>
+        )}
+        {hints.map((h, i) => (
+          <p key={i} className="text-[12px] italic text-terracotta">
+            <span className="small-caps text-[9px] font-semibold me-1">✦ {t("chef_note")}:</span>
+            {h.text}
+          </p>
+        ))}
+        {editMode && (
+          <div className="space-y-2 pt-1">
+            <div className="flex items-start gap-2">
+              <textarea
+                value={overrideDraft}
+                onChange={(e) => setOverrideDraft(e.target.value)}
+                onBlur={() => setStepOverride(recipe.id, key, overrideDraft)}
+                placeholder={t("edit_step_ph")}
+                rows={2}
+                className="flex-1 bg-transparent border border-dashed border-ink-soft/30 focus:border-terracotta rounded px-2 py-1 text-[13px] outline-none resize-none placeholder:text-ink-soft/40"
+              />
+              {override && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOverrideDraft("");
+                    setStepOverride(recipe.id, key, "");
+                  }}
+                  className="text-[10px] uppercase tracking-wider text-ink-soft hover:text-terracotta shrink-0 mt-1"
+                >
+                  ↺ {t("revert")}
+                </button>
+              )}
+            </div>
+            <input
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              onBlur={() => setStepNote(recipe.id, key, noteDraft)}
+              placeholder={t("step_note_ph")}
+              className="w-full bg-transparent border-b border-dashed border-ink-soft/30 focus:border-terracotta text-[13px] italic outline-none py-1 placeholder:text-ink-soft/40"
+            />
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+/* --- Consult modal --- */
+function ConsultModal({
+  recipe,
+  lang,
+  onClose,
+}: {
+  recipe: Recipe;
+  lang: "en" | "he";
+  onClose: () => void;
+}) {
+  const t = useT();
+  const consult = useServerFn(consultChefOnRecipe);
+  const [request, setRequest] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit() {
+    const q = request.trim();
+    if (!q || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await consult({
+        data: {
+          request: q,
+          lang,
+          recipe: {
+            title: recipe.title,
+            description: recipe.description ?? null,
+            servings: recipe.servings,
+            ingredients: recipe.ingredients,
+            instructions: recipe.instructions,
+            ingredient_sections: recipe.ingredient_sections,
+            instruction_sections: recipe.instruction_sections,
+          },
+        },
+      });
+      addChefConsultation(recipe.id, {
+        request: q,
+        summary: res.summary,
+        hints: res.hints,
+      });
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] bg-foreground/40 backdrop-blur-sm grid place-items-end sm:place-items-center px-4 pb-6 sm:pb-0"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 40, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 40, opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[420px] bg-background rounded-2xl border border-border shadow-2xl p-5"
+      >
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <p className="small-caps text-[10px] text-terracotta font-semibold">
+              ✦ {t("chef_note")}
+            </p>
+            <h4 className="font-serif text-xl mt-0.5">{t("consult_title")}</h4>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("close")}
+            className="text-ink-soft/60 hover:text-terracotta text-xl leading-none px-1"
+          >
+            ×
+          </button>
+        </div>
+        <textarea
+          value={request}
+          onChange={(e) => setRequest(e.target.value)}
+          placeholder={t("consult_ph")}
+          rows={3}
+          autoFocus
+          className="w-full bg-paper/40 border border-border rounded-lg p-3 text-[14px] outline-none focus:border-terracotta resize-none placeholder:text-ink-soft/50"
+        />
+        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[12px] uppercase tracking-widest text-ink-soft px-3 py-2"
+          >
+            {t("cancel")}
+          </button>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={loading || !request.trim()}
+            className="bg-terracotta text-paper text-[12px] uppercase tracking-widest px-4 py-2 rounded-full disabled:opacity-50"
+          >
+            {loading ? t("consult_thinking") : t("consult_go")}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
