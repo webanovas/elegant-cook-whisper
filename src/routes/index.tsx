@@ -521,7 +521,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     }
     return shuffleWithSeed(base, shuffleSeed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipes, quickIdx, minRating, shuffleSeed, vibeIds]);
+  }, [recipes, quickIdx, minRating, shuffleSeed, vibeIds, searchQ]);
 
   async function runVibe(vibeText: string, respectFilters: boolean) {
     setVibeLoading(true);
