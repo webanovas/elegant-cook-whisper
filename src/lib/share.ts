@@ -1,4 +1,5 @@
 import type { Recipe } from "./recipes-store";
+import { supabase } from "@/integrations/supabase/client";
 
 // A minimal shareable recipe payload. We deliberately drop image blobs, notes,
 // overrides, and chef consultations — the recipient gets a clean copy of the
@@ -89,6 +90,50 @@ function fromPayload(
   };
 }
 
+function makeShareCode(length = 10): string {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  let code = "";
+  for (const byte of bytes) code += alphabet[byte & 63];
+  return code;
+}
+
+async function createShortShare(recipe: Recipe): Promise<string> {
+  const db = supabase as any;
+  const payload = toPayload(recipe);
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const code = makeShareCode();
+    const { error } = await db.from("recipe_shares").insert({
+      id: code,
+      recipe: payload,
+    });
+
+    if (!error) return code;
+    // Random collision — extremely unlikely, but retry with a fresh code.
+    if (error.code !== "23505") throw error;
+  }
+
+  throw new Error("Could not create a share link. Please try again.");
+}
+
+export async function fetchSharedRecipeByCode(
+  code: string,
+): Promise<Omit<Recipe, "id" | "created_at" | "cookbook_id"> | null> {
+  if (!/^[A-Za-z0-9_-]{8,24}$/.test(code)) return null;
+
+  const db = supabase as any;
+  const { data, error } = await db
+    .from("recipe_shares")
+    .select("recipe")
+    .eq("id", code)
+    .maybeSingle();
+
+  if (error || !data?.recipe) return null;
+  return fromPayload(data.recipe as SharedRecipe);
+}
+
 // Encoded formats:
 //   "z" + base64url(gzip(json))  — compact, ~4-6× smaller
 //   raw base64url(json)          — legacy fallback
@@ -126,7 +171,7 @@ export async function decodeSharedRecipe(
 }
 
 export async function buildShareUrl(recipe: Recipe): Promise<string> {
-  const encoded = await encodeSharedRecipe(recipe);
+  const code = await createShortShare(recipe);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/import#d=${encoded}`;
+  return `${origin}/import?s=${code}`;
 }
