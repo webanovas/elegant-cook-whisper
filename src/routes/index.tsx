@@ -577,6 +577,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   function reset() {
     setQuickIdx(0);
     setMinRating(0);
+    setSearchQ("");
     setShuffleSeed(Math.floor(Math.random() * 1e6));
     clearVibe();
   }
