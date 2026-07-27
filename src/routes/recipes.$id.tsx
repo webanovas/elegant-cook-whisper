@@ -165,7 +165,9 @@ function RecipeDetail() {
           >
             ←
           </Link>
+          <ShareButton recipe={recipe} />
         </div>
+
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
