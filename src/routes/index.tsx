@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useRecipes, saveRecipe, type Recipe } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
 import { RecipeCard } from "@/components/RecipeCard";
