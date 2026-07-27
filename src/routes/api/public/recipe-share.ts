@@ -35,6 +35,11 @@ const SharedRecipeSchema = z.object({
 
 const CreateShareSchema = z.object({
   recipe: SharedRecipeSchema,
+  image_data_url: z
+    .string()
+    .regex(/^data:image\/(png|jpe?g|webp|gif);base64,/i)
+    .max(6_000_000)
+    .optional(),
 });
 
 function json(body: unknown, init?: ResponseInit) {
