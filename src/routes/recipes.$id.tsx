@@ -165,7 +165,9 @@ function RecipeDetail() {
           >
             ←
           </Link>
+          <ShareButton recipe={recipe} />
         </div>
+
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -727,8 +729,10 @@ function ConsultModal({
   const t = useT();
   const consult = useServerFn(consultChefOnRecipe);
   const [request, setRequest] = useState("");
+  const [mode, setMode] = useState<"discuss" | "alter">("discuss");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reply, setReply] = useState<string | null>(null);
 
   async function submit() {
     const q = request.trim();
@@ -751,12 +755,17 @@ function ConsultModal({
           },
         },
       });
-      addChefConsultation(recipe.id, {
-        request: q,
-        summary: res.summary,
-        hints: res.hints,
-      });
-      onClose();
+      if (mode === "alter") {
+        addChefConsultation(recipe.id, {
+          request: q,
+          summary: res.summary,
+          hints: res.hints,
+        });
+        onClose();
+      } else {
+        // Discuss-only: show the summary in the dialog, don't pin anything.
+        setReply(res.summary || t("no_hints"));
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -796,6 +805,35 @@ function ConsultModal({
             ×
           </button>
         </div>
+
+        {/* Mode toggle: discuss vs alter */}
+        <div
+          className="mb-3 inline-flex w-full rounded-full border border-border p-0.5 bg-paper/40"
+          dir={lang === "he" ? "rtl" : "ltr"}
+        >
+          {(["discuss", "alter"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={`flex-1 text-[11px] small-caps py-1.5 rounded-full transition-colors ${
+                mode === m
+                  ? "bg-terracotta text-paper"
+                  : "text-ink-soft hover:text-terracotta"
+              }`}
+            >
+              {m === "discuss"
+                ? t("consult_mode_discuss")
+                : t("consult_mode_alter")}
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] italic text-ink-soft mb-3">
+          {mode === "discuss"
+            ? t("consult_mode_hint_discuss")
+            : t("consult_mode_hint_alter")}
+        </p>
+
         <textarea
           value={request}
           onChange={(e) => setRequest(e.target.value)}
@@ -805,13 +843,25 @@ function ConsultModal({
           className="w-full bg-paper/40 border border-border rounded-lg p-3 text-[14px] outline-none focus:border-terracotta resize-none placeholder:text-ink-soft/50"
         />
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+
+        {reply && (
+          <div className="mt-3 rounded-lg border border-terracotta/40 bg-terracotta/5 p-3">
+            <p className="small-caps text-[10px] text-terracotta font-semibold mb-1">
+              ✦ {t("consult_reply_title")}
+            </p>
+            <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-ink">
+              {reply}
+            </p>
+          </div>
+        )}
+
         <div className="mt-4 flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
             className="text-[12px] uppercase tracking-widest text-ink-soft px-3 py-2"
           >
-            {t("cancel")}
+            {reply ? t("consult_close") : t("cancel")}
           </button>
           <button
             type="button"
@@ -819,13 +869,64 @@ function ConsultModal({
             disabled={loading || !request.trim()}
             className="bg-terracotta text-paper text-[12px] uppercase tracking-widest px-4 py-2 rounded-full disabled:opacity-50"
           >
-            {loading ? t("consult_thinking") : t("consult_go")}
+            {loading
+              ? t("consult_thinking")
+              : reply
+                ? t("consult_ask_again")
+                : t("consult_go")}
           </button>
         </div>
       </motion.div>
     </motion.div>
   );
 }
+
+function ShareButton({ recipe }: { recipe: Recipe }) {
+  const t = useT();
+  const [copied, setCopied] = useState(false);
+
+  async function onShare() {
+    const { buildShareUrl } = await import("@/lib/share");
+    const url = buildShareUrl(recipe);
+    const shareData = {
+      title: recipe.title,
+      text: recipe.description ?? recipe.title,
+      url,
+    };
+    try {
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function"
+      ) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch {
+      /* user cancelled or share failed — fall through to copy */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      window.prompt(t("share_sheet_title"), url);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onShare}
+      aria-label={t("share_recipe")}
+      title={t("share_recipe")}
+      className="absolute top-4 end-4 bg-background/80 backdrop-blur-md h-9 px-3 rounded-full inline-flex items-center gap-1.5 text-[11px] shadow-sm small-caps text-ink hover:text-terracotta transition-colors"
+    >
+      <span aria-hidden className="text-sm leading-none">↗</span>
+      <span>{copied ? t("share_copied") : t("share_recipe")}</span>
+    </button>
+  );
+}
+
 
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (

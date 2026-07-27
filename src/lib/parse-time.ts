@@ -33,7 +33,12 @@ const UNITS: Unit[] = [
 function buildRegex(): RegExp {
   const num = "\\d+(?:[.,]\\d+)?";
   const range = `${num}(?:\\s*[–\\-]\\s*${num})?`;
-  const parts = UNITS.map((u) => `(?:${range})\\s*(?:${u.pattern})\\b`);
+  // Use Unicode-aware boundaries so Hebrew words (which aren't ASCII \w) still
+  // anchor cleanly: \b treats Hebrew letters as non-word, so "5 דקות" never
+  // matched. Lookbehind guards against matching inside "5g5min"-like tokens.
+  const parts = UNITS.map(
+    (u) => `(?<![\\p{L}\\p{N}])(?:${range})\\s*(?:${u.pattern})(?![\\p{L}])`,
+  );
   return new RegExp(parts.join("|"), "giu");
 }
 
