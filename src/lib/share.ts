@@ -120,10 +120,14 @@ function fromPayload(
 }
 
 async function createShortShare(recipe: Recipe): Promise<string> {
+  const image_data_url = await resolveShareImage(recipe);
   const res = await fetch("/api/public/recipe-share", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ recipe: toPayload(recipe) }),
+    body: JSON.stringify({
+      recipe: toPayload(recipe),
+      ...(image_data_url ? { image_data_url } : {}),
+    }),
   });
 
   const json = (await res.json().catch(() => ({}))) as {
