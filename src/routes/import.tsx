@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { saveRecipe } from "@/lib/recipes-store";
+import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
 import { decodeSharedRecipe, fetchSharedRecipeByCode } from "@/lib/share";
 import { generateRecipeImage } from "@/lib/recipes.functions";
 import { useT } from "@/lib/i18n";
@@ -57,11 +58,14 @@ function ImportRecipe() {
           return;
         }
         // Shared images often 404 or fail to load on the recipient's device.
-        // Drop the incoming image_url and regenerate a fresh hero locally so
-        // the recipe reliably shows a photo. The recipe detail view listens
-        // for `gn:image-updated` and refreshes as soon as the new image lands.
+        // Save an instant local cookbook cover first, then replace it with a
+        // freshly generated food image in the background. This guarantees the
+        // imported recipe never lands as an empty/blank image slot.
         const prompt = recipe.image_prompt ?? recipe.title;
-        const saved = saveRecipe({ ...recipe, image_url: null });
+        const saved = saveRecipe({
+          ...recipe,
+          image_url: createRecipeCoverDataUrl(recipe),
+        });
         router.navigate({ to: "/recipes/$id", params: { id: saved.id }, replace: true });
         if (prompt) {
           genImage({ data: { prompt } })
