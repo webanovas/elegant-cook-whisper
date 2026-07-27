@@ -6,6 +6,8 @@ type ImageEventPayload =
   | { type?: "error"; error?: { message?: string } }
   | Record<string, unknown>;
 
+const activeRefreshes = new Set<string>();
+
 function ingredientNames(recipe: Recipe): string {
   const ingredients: Ingredient[] = recipe.ingredient_sections?.length
     ? recipe.ingredient_sections.flatMap((section) => section.items)
@@ -100,8 +102,9 @@ async function readImageStream(res: Response): Promise<string> {
     throw new Error("Image generation returned no image");
   }
 
-  const reader = res.body?.pipeThrough(new TextDecoderStream()).getReader();
+  const reader = res.body?.getReader();
   if (!reader) throw new Error("Image stream could not be read");
+  const decoder = new TextDecoder();
 
   let buffer = "";
   let latest: string | null = null;
@@ -128,11 +131,12 @@ async function readImageStream(res: Response): Promise<string> {
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
-      buffer += value;
+      buffer += decoder.decode(value, { stream: true });
       const blocks = buffer.split(/\r?\n\r?\n/);
       buffer = blocks.pop() ?? "";
       blocks.forEach(consume);
     }
+    buffer += decoder.decode();
     if (buffer.trim()) consume(buffer);
   } finally {
     reader.cancel().catch(() => {});
@@ -145,16 +149,28 @@ async function readImageStream(res: Response): Promise<string> {
 }
 
 export async function refreshRecipeHeroImage(recipe: Recipe): Promise<void> {
-  const res = await fetch("/api/generate-recipe-image", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: buildRecipeHeroPrompt(recipe) }),
-  });
+  if (activeRefreshes.has(recipe.id)) return;
+  activeRefreshes.add(recipe.id);
 
-  if (!res.ok) {
-    throw new Error((await res.text().catch(() => "")) || `Image generation failed (${res.status})`);
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 120_000);
+
+  try {
+    const res = await fetch("/api/generate-recipe-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: buildRecipeHeroPrompt(recipe) }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error((await res.text().catch(() => "")) || `Image generation failed (${res.status})`);
+    }
+
+    const imageUrl = await readImageStream(res);
+    setRecipeImage(recipe.id, imageUrl);
+  } finally {
+    window.clearTimeout(timeout);
+    activeRefreshes.delete(recipe.id);
   }
-
-  const imageUrl = await readImageStream(res);
-  setRecipeImage(recipe.id, imageUrl);
 }

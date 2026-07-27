@@ -15,7 +15,7 @@ import {
   useRecipe,
   type Recipe,
 } from "@/lib/recipes-store";
-import { getRecipeImage, IDB_MARKER, useRecipeImage } from "@/lib/recipe-images";
+import { createRecipeCoverDataUrl, getRecipeImage, IDB_MARKER, useRecipeImage } from "@/lib/recipe-images";
 import { refreshRecipeHeroImage } from "@/lib/recipe-hero";
 import { PortionScaler } from "@/components/PortionScaler";
 import { IngredientRow } from "@/components/IngredientRow";
@@ -50,6 +50,10 @@ function RecipeDetail() {
     { confidence: number; warnings: string[] } | null
   >(null);
   const imgSrc = useRecipeImage(recipe?.id ?? "", recipe?.image_url ?? null);
+  const fallbackHeroSrc = useMemo(
+    () => (recipe ? createRecipeCoverDataUrl(recipe) : null),
+    [recipe],
+  );
 
   useEffect(() => {
     if (!recipe) return;
@@ -67,13 +71,6 @@ function RecipeDetail() {
     let cancelled = false;
 
     async function maybeRefreshCookbookCover() {
-      const refreshKey = `gn:hero-refresh-started:${currentRecipe.id}`;
-      try {
-        if (window.sessionStorage.getItem(refreshKey)) return;
-      } catch {
-        /* ignore */
-      }
-
       let shouldRefresh = !currentRecipe.image_url;
       if (currentRecipe.image_url?.startsWith("data:image/svg")) {
         shouldRefresh = true;
@@ -84,11 +81,6 @@ function RecipeDetail() {
       }
 
       if (!shouldRefresh) return;
-      try {
-        window.sessionStorage.setItem(refreshKey, "1");
-      } catch {
-        /* ignore */
-      }
       refreshRecipeHeroImage(currentRecipe).catch((e) =>
         console.error("recipe hero repair failed", e),
       );
@@ -180,9 +172,9 @@ function RecipeDetail() {
         {/* Hero */}
         <div className="relative">
           <div className="w-full aspect-[4/5] bg-muted overflow-hidden">
-            {imgSrc ? (
+            {imgSrc || fallbackHeroSrc ? (
               <img
-                src={imgSrc}
+                src={imgSrc ?? fallbackHeroSrc ?? ""}
                 alt={recipe.title}
                 className="w-full h-full object-cover"
                 decoding="async"
