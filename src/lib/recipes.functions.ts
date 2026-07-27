@@ -88,15 +88,8 @@ export const scanRecipeFromImages = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }): Promise<ScannedRecipeResult> => {
-    const { extractRecipeFromImages, generateHeroImage } = await import(
-      "./recipes.server"
-    );
+    const { extractRecipeFromImages } = await import("./recipes.server");
     const scanned = await extractRecipeFromImages(data.images);
-    // Only spend credits on a hero image when the transcription seems trustworthy.
-    const imageUrl =
-      scanned.confidence >= 0.55
-        ? await generateHeroImage(scanned.food_style_image_prompt)
-        : null;
     return {
       title: scanned.title,
       description: scanned.description,
@@ -108,7 +101,7 @@ export const scanRecipeFromImages = createServerFn({ method: "POST" })
       ingredient_sections: scanned.ingredient_sections,
       instruction_sections: scanned.instruction_sections,
       tags: scanned.tags,
-      image_url: imageUrl,
+      image_url: null,
       image_prompt: scanned.food_style_image_prompt,
       source_url: null,
       confidence: scanned.confidence,

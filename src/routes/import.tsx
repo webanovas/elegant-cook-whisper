@@ -1,10 +1,9 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { saveRecipe } from "@/lib/recipes-store";
 import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
+import { refreshRecipeHeroImage } from "@/lib/recipe-hero";
 import { decodeSharedRecipe, fetchSharedRecipeByCode } from "@/lib/share";
-import { generateRecipeImage } from "@/lib/recipes.functions";
 import { useT } from "@/lib/i18n";
 
 
@@ -32,7 +31,6 @@ export const Route = createFileRoute("/import")({
 function ImportRecipe() {
   const t = useT();
   const router = useRouter();
-  const genImage = useServerFn(generateRecipeImage);
   const [error, setError] = useState<string | null>(null);
 
 
@@ -61,21 +59,14 @@ function ImportRecipe() {
         // Save an instant local cookbook cover first, then replace it with a
         // freshly generated food image in the background. This guarantees the
         // imported recipe never lands as an empty/blank image slot.
-        const prompt = recipe.image_prompt ?? recipe.title;
         const saved = saveRecipe({
           ...recipe,
           image_url: createRecipeCoverDataUrl(recipe),
         });
         router.navigate({ to: "/recipes/$id", params: { id: saved.id }, replace: true });
-        if (prompt) {
-          genImage({ data: { prompt } })
-            .then((res) => {
-              if (res.image_url) {
-                saveRecipe({ ...saved, image_url: res.image_url });
-              }
-            })
-            .catch((e) => console.error("shared recipe hero image gen failed", e));
-        }
+        refreshRecipeHeroImage(saved).catch((e) =>
+          console.error("shared recipe hero image gen failed", e),
+        );
 
       } catch (e) {
         if (!cancelled) setError((e as Error).message || t("import_bad_payload"));

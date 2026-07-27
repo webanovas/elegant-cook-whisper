@@ -210,6 +210,20 @@ export function saveRecipe(
   return full;
 }
 
+export function setRecipeImage(id: string, image_url: string | null) {
+  const all = readRaw();
+  if (!all.some((r) => r.id === id)) return;
+
+  let imageUrl = image_url;
+  if (imageUrl && imageUrl.startsWith("data:")) {
+    putRecipeImage(id, imageUrl).catch((e) => console.error("image save failed", e));
+    imageUrl = IDB_MARKER + id;
+  }
+
+  const next = all.map((r) => (r.id === id ? { ...r, image_url: imageUrl } : r));
+  writeRaw(next);
+}
+
 export function moveRecipeToBook(id: string, cookbook_id: string) {
   const all = readRaw();
   const next = all.map((r) => (r.id === id ? { ...r, cookbook_id } : r));

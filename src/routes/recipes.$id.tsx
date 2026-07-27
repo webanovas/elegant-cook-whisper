@@ -15,7 +15,8 @@ import {
   useRecipe,
   type Recipe,
 } from "@/lib/recipes-store";
-import { useRecipeImage } from "@/lib/recipe-images";
+import { getRecipeImage, IDB_MARKER, useRecipeImage } from "@/lib/recipe-images";
+import { refreshRecipeHeroImage } from "@/lib/recipe-hero";
 import { PortionScaler } from "@/components/PortionScaler";
 import { IngredientRow } from "@/components/IngredientRow";
 import { StarRating } from "@/components/StarRating";
@@ -58,6 +59,45 @@ function RecipeDetail() {
     } catch {
       /* ignore */
     }
+  }, [recipe]);
+
+  useEffect(() => {
+    if (!recipe) return;
+    const currentRecipe = recipe;
+    let cancelled = false;
+
+    async function maybeRefreshCookbookCover() {
+      const refreshKey = `gn:hero-refresh-started:${currentRecipe.id}`;
+      try {
+        if (window.sessionStorage.getItem(refreshKey)) return;
+      } catch {
+        /* ignore */
+      }
+
+      let shouldRefresh = !currentRecipe.image_url;
+      if (currentRecipe.image_url?.startsWith("data:image/svg")) {
+        shouldRefresh = true;
+      } else if (currentRecipe.image_url?.startsWith(IDB_MARKER)) {
+        const blob = await getRecipeImage(currentRecipe.id);
+        if (cancelled) return;
+        shouldRefresh = !blob || blob.type.includes("svg");
+      }
+
+      if (!shouldRefresh) return;
+      try {
+        window.sessionStorage.setItem(refreshKey, "1");
+      } catch {
+        /* ignore */
+      }
+      refreshRecipeHeroImage(currentRecipe).catch((e) =>
+        console.error("recipe hero repair failed", e),
+      );
+    }
+
+    maybeRefreshCookbookCover();
+    return () => {
+      cancelled = true;
+    };
   }, [recipe]);
 
   // Build a map of chef hints keyed by "target:sectionIndex:itemIndex" for fast lookup.

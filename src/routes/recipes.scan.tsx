@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
 import { saveRecipe } from "@/lib/recipes-store";
 import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
-import { scanRecipeFromImages, generateRecipeImage } from "@/lib/recipes.functions";
+import { refreshRecipeHeroImage } from "@/lib/recipe-hero";
+import { scanRecipeFromImages } from "@/lib/recipes.functions";
 import { LangToggle } from "@/components/LangToggle";
 import { useT } from "@/lib/i18n";
 
@@ -55,7 +56,6 @@ function ScanRecipePage() {
   const router = useRouter();
   const t = useT();
   const scan = useServerFn(scanRecipeFromImages);
-  const genImage = useServerFn(generateRecipeImage);
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,14 +104,9 @@ function ScanRecipePage() {
         image_prompt: result.image_prompt,
         source_url: null,
       });
-      const prompt = result.image_prompt ?? result.title;
-      if (prompt) {
-        genImage({ data: { prompt } })
-          .then((res) => {
-            if (res.image_url) saveRecipe({ ...saved, image_url: res.image_url });
-          })
-          .catch((e) => console.error("scan hero image gen failed", e));
-      }
+      refreshRecipeHeroImage(saved).catch((e) =>
+        console.error("scan hero image gen failed", e),
+      );
       // Stash a scan warning on session storage so the recipe page can show it once.
       if (result.confidence < 0.75 || result.warnings.length > 0) {
         try {
