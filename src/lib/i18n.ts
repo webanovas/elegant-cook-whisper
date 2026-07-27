@@ -89,6 +89,8 @@ const en: Dict = {
   entries: "entries",
   // search
   search_all: "search all recipes",
+  filters_label: "filters",
+  search_label: "search",
   dish_type: "dish type",
   all_types: "all types",
   prep_length: "prep length",
@@ -347,6 +349,8 @@ const he: Dict = {
   entries: "מתכונים",
 
   search_all: "חיפוש בכל המתכונים",
+  filters_label: "פילטרים",
+  search_label: "חיפוש",
   dish_type: "סוג מנה",
   all_types: "כל הסוגים",
   prep_length: "זמן הכנה",
