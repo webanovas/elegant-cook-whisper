@@ -588,18 +588,48 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
     <section>
       {hasRecipes && (
         <div className="mt-4 grid gap-4 md:grid-cols-[1fr_320px] items-start">
-          {/* Ledger-style filters */}
-          <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-6">
-            <QuicknessTabs value={quickIdx} onChange={setQuickIdx} t={t} />
-            <RatingStars value={minRating} onChange={setMinRating} t={t} />
+          {/* Toolbar + collapsible filters/search */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setSearchOpen((v) => !v)}
+                aria-expanded={searchOpen}
+                aria-label={t("search_label")}
+                className={`inline-flex items-center gap-1.5 small-caps text-[10px] rounded-full border px-3 py-1.5 transition-colors ${
+                  searchOpen || searchQ
+                    ? "bg-terracotta text-paper border-terracotta"
+                    : "text-terracotta border-terracotta/40 hover:bg-terracotta hover:text-paper"
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <span>{t("search_label")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((v) => !v)}
+                aria-expanded={filtersOpen}
+                className={`inline-flex items-center gap-1.5 small-caps text-[10px] rounded-full border px-3 py-1.5 transition-colors ${
+                  filtersOpen || anyFilterActive
+                    ? "bg-terracotta text-paper border-terracotta"
+                    : "text-terracotta border-terracotta/40 hover:bg-terracotta hover:text-paper"
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 5h18M6 12h12M10 19h4" />
+                </svg>
+                <span>{t("filters_label")}</span>
+                {anyFilterActive && <span className="inline-block w-1.5 h-1.5 rounded-full bg-paper" />}
+              </button>
 
-
-            <div className="flex items-center justify-between gap-3 pt-1">
-              <span className="small-caps text-[10px] text-ink-soft">
+              <span className="small-caps text-[10px] text-ink-soft ms-auto">
                 <span dir="ltr">
                   {filtered.length} {t("of_total")} {recipes.length}
                 </span>
-                {!anyFilterActive && !vibeIds && (
+                {!anyFilterActive && !vibeIds && !searchQ && (
                   <button
                     type="button"
                     onClick={() => setShuffleSeed(Math.floor(Math.random() * 1e6))}
@@ -608,17 +638,50 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
                     {t("reshuffle")}
                   </button>
                 )}
+                {(anyFilterActive || vibeIds || searchQ) && (
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="ms-3 text-ink-soft/70 hover:text-terracotta"
+                  >
+                    {t("reset_all")}
+                  </button>
+                )}
               </span>
-              {(anyFilterActive || vibeIds) && (
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
-                >
-                  {t("reset_all")}
-                </button>
-              )}
             </div>
+
+            {searchOpen && (
+              <div className="paper-page rounded-[3px] px-4 py-3 sm:px-5 flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-ink-soft shrink-0">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <input
+                  type="text"
+                  autoFocus
+                  value={searchQ}
+                  onChange={(e) => setSearchQ(e.target.value)}
+                  placeholder={t("search_ph")}
+                  className="flex-1 min-w-0 bg-transparent py-1 text-sm font-serif italic outline-none placeholder:text-ink-soft/60"
+                />
+                {searchQ && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQ("")}
+                    className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
+                  >
+                    {t("clear")}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {filtersOpen && (
+              <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-6">
+                <QuicknessTabs value={quickIdx} onChange={setQuickIdx} t={t} />
+                <RatingStars value={minRating} onChange={setMinRating} t={t} />
+              </div>
+            )}
           </div>
 
           {/* Ask the cook */}
