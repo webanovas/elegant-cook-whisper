@@ -1,5 +1,4 @@
 import type { Recipe } from "./recipes-store";
-import { supabase } from "@/integrations/supabase/client";
 
 // A minimal shareable recipe payload. We deliberately drop image blobs, notes,
 // overrides, and chef consultations — the recipient gets a clean copy of the
@@ -90,32 +89,27 @@ function fromPayload(
   };
 }
 
-function makeShareCode(length = 10): string {
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  let code = "";
-  for (const byte of bytes) code += alphabet[byte & 63];
-  return code;
-}
-
 async function createShortShare(recipe: Recipe): Promise<string> {
-  const db = supabase as any;
-  const payload = toPayload(recipe);
+  const res = await fetch("/api/public/recipe-share", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ recipe: toPayload(recipe) }),
+  });
 
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const code = makeShareCode();
-    const { error } = await db.from("recipe_shares").insert({
-      id: code,
-      recipe: payload,
-    });
+  const json = (await res.json().catch(() => ({}))) as {
+    code?: unknown;
+    error?: unknown;
+  };
 
-    if (!error) return code;
-    // Random collision — extremely unlikely, but retry with a fresh code.
-    if (error.code !== "23505") throw error;
+  if (!res.ok || typeof json.code !== "string") {
+    throw new Error(
+      typeof json.error === "string"
+        ? json.error
+        : "Could not create a share link. Please try again.",
+    );
   }
 
-  throw new Error("Could not create a share link. Please try again.");
+  return json.code;
 }
 
 export async function fetchSharedRecipeByCode(
@@ -123,15 +117,12 @@ export async function fetchSharedRecipeByCode(
 ): Promise<Omit<Recipe, "id" | "created_at" | "cookbook_id"> | null> {
   if (!/^[A-Za-z0-9_-]{8,24}$/.test(code)) return null;
 
-  const db = supabase as any;
-  const { data, error } = await db
-    .from("recipe_shares")
-    .select("recipe")
-    .eq("id", code)
-    .maybeSingle();
+  const res = await fetch(`/api/public/recipe-share?s=${encodeURIComponent(code)}`);
+  if (!res.ok) return null;
 
-  if (error || !data?.recipe) return null;
-  return fromPayload(data.recipe as SharedRecipe);
+  const json = (await res.json().catch(() => ({}))) as { recipe?: unknown };
+  if (!json.recipe) return null;
+  return fromPayload(json.recipe as SharedRecipe);
 }
 
 // Encoded formats:
