@@ -104,7 +104,7 @@ export const Route = createFileRoute("/api/public/recipe-share")({
 
         let input: unknown;
         try {
-          input = await request.json();
+          input = JSON.parse(await request.text());
         } catch {
           return json({ error: "Invalid request" }, { status: 400 });
         }
