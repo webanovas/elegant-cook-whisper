@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { saveRecipe } from "@/lib/recipes-store";
+import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
+import { generateRecipeImage } from "@/lib/recipes.functions";
 import { LangToggle } from "@/components/LangToggle";
 import { useT } from "@/lib/i18n";
 
@@ -35,6 +38,7 @@ function parseIngredientLine(line: string): { amount: string; unit: string; name
 function NewRecipePage() {
   const router = useRouter();
   const t = useT();
+  const genImage = useServerFn(generateRecipeImage);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [prepTime, setPrepTime] = useState("");
@@ -60,23 +64,36 @@ function NewRecipePage() {
       .split(/\r?\n/)
       .map((s) => s.trim().replace(/^\d+[.)-]\s*/, ""))
       .filter(Boolean);
+    const tagsList = tags
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    const titleClean = title.trim();
+    const descClean = description.trim() || null;
     const saved = saveRecipe({
-      title: title.trim(),
-      description: description.trim() || null,
+      title: titleClean,
+      description: descClean,
       prep_time: prepTime.trim() || null,
       cook_time: cookTime.trim() || null,
       servings: Number(servings) || 2,
       ingredients,
       instructions,
-      tags: tags
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean),
-      image_url: null,
+      tags: tagsList,
+      image_url: createRecipeCoverDataUrl({
+        title: titleClean,
+        tags: tagsList,
+        description: descClean,
+      }),
       image_prompt: null,
       source_url: null,
     });
     router.navigate({ to: "/recipes/$id", params: { id: saved.id } });
+    const prompt = descClean ? `${titleClean}. ${descClean}` : titleClean;
+    genImage({ data: { prompt } })
+      .then((res) => {
+        if (res.image_url) saveRecipe({ ...saved, image_url: res.image_url });
+      })
+      .catch((e) => console.error("manual hero image gen failed", e));
   }
 
   return (
