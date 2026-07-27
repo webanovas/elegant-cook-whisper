@@ -8,6 +8,72 @@ const VERSION = 1;
 
 export const IDB_MARKER = "idb:";
 
+function escapeSvgText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function wrapSvgText(text: string, maxChars: number): string[] {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+    if (lines.length === 2) break;
+  }
+  if (current && lines.length < 3) lines.push(current);
+  return lines.slice(0, 3);
+}
+
+export function createRecipeCoverDataUrl(recipe: {
+  title: string;
+  tags?: string[];
+  description?: string | null;
+}): string {
+  const titleLines = wrapSvgText(recipe.title || "Recipe", 18);
+  const tag = recipe.tags?.[0] || recipe.description || "Gourmet Notes";
+  const initial = (recipe.title || "G").trim().slice(0, 1).toLocaleUpperCase();
+  const titleTspans = titleLines
+    .map(
+      (line, i) =>
+        `<tspan x="600" y="${460 + i * 86}">${escapeSvgText(line)}</tspan>`,
+    )
+    .join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8f1e4"/>
+      <stop offset="0.52" stop-color="#efe0c7"/>
+      <stop offset="1" stop-color="#d8aa83"/>
+    </linearGradient>
+    <radialGradient id="plate" cx="50%" cy="42%" r="55%">
+      <stop offset="0" stop-color="#fff8ec"/>
+      <stop offset="0.58" stop-color="#ecd3b0"/>
+      <stop offset="1" stop-color="#a85d44"/>
+    </radialGradient>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 0.12"/></feComponentTransfer></filter>
+  </defs>
+  <rect width="1200" height="900" fill="url(#paper)"/>
+  <rect width="1200" height="900" filter="url(#grain)" opacity="0.35"/>
+  <circle cx="600" cy="335" r="178" fill="url(#plate)" opacity="0.92"/>
+  <circle cx="600" cy="335" r="128" fill="none" stroke="#fff8ec" stroke-width="18" opacity="0.55"/>
+  <text x="600" y="378" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="168" fill="#5c2f25" opacity="0.48">${escapeSvgText(initial)}</text>
+  <text text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-style="italic" fill="#2b1f14">${titleTspans}</text>
+  <text x="600" y="735" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" letter-spacing="7" fill="#8a503d">${escapeSvgText(String(tag).slice(0, 54).toLocaleUpperCase())}</text>
+  <path d="M290 780H910" stroke="#a85d44" stroke-width="3" opacity="0.45"/>
+</svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 function isBrowser() {
   return typeof window !== "undefined" && "indexedDB" in window;
 }

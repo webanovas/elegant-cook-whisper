@@ -348,7 +348,7 @@ export async function generateHeroImage(prompt: string): Promise<string | null> 
   if (!key) return null;
 
   try {
-    const res = await fetch(`${GATEWAY_URL}/chat/completions`, {
+    const res = await fetch(`${GATEWAY_URL}/images/generations`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -363,18 +363,73 @@ export async function generateHeroImage(prompt: string): Promise<string | null> 
           },
         ],
         modalities: ["image", "text"],
+        stream: true,
       }),
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as {
-      choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
-    };
-    const url = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    return url ?? null;
+    const image = await extractImageFromResponse(res);
+    return image ? await persistGeneratedImage(image) : null;
   } catch (e) {
     console.error("Hero image generation failed:", e);
     return null;
   }
+}
+
+async function extractImageFromResponse(res: Response): Promise<string | null> {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/event-stream")) {
+    const json = await res.json().catch(() => null);
+    return findImageLikeValue(json);
+  }
+
+  const text = await res.text();
+  let latest: string | null = null;
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("data:")) continue;
+    const payload = trimmed.slice(5).trim();
+    if (!payload || payload === "[DONE]") continue;
+    const json = JSON.parse(payload);
+    const image = findImageLikeValue(json);
+    if (image) latest = image;
+  }
+  return latest;
+}
+
+function findImageLikeValue(value: unknown): string | null {
+  if (typeof value === "string") {
+    if (value.startsWith("data:image/")) return value;
+    if (/^https?:\/\//i.test(value) && /\.(png|jpe?g|webp)(\?|$)/i.test(value)) return value;
+    if (/^[A-Za-z0-9+/=\n\r]+$/.test(value) && value.length > 10_000) {
+      return `data:image/png;base64,${value.replace(/\s/g, "")}`;
+    }
+    return null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findImageLikeValue(item);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (value && typeof value === "object") {
+    for (const item of Object.values(value as Record<string, unknown>)) {
+      const found = findImageLikeValue(item);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+async function persistGeneratedImage(image: string): Promise<string> {
+  if (image.startsWith("data:image/")) return image;
+  const res = await fetch(image);
+  if (!res.ok) return image;
+  const contentType = res.headers.get("content-type") || "image/png";
+  if (!contentType.startsWith("image/")) return image;
+  const buffer = await res.arrayBuffer();
+  const base64 = Buffer.from(buffer).toString("base64");
+  return `data:${contentType};base64,${base64}`;
 }
 
 export async function suggestIngredientSubstitute(
