@@ -81,6 +81,16 @@ function eventPayloadFromBlock(block: string): { eventName: string; payload: Ima
   }
 }
 
+function streamErrorMessage(payload: ImageEventPayload): string {
+  if (payload && typeof payload === "object" && "error" in payload) {
+    const error = payload.error;
+    if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+      return error.message;
+    }
+  }
+  return "Image generation failed";
+}
+
 async function readImageStream(res: Response): Promise<string> {
   const contentType = res.headers.get("content-type") ?? "";
   if (!contentType.includes("text/event-stream")) {
@@ -103,10 +113,7 @@ async function readImageStream(res: Response): Promise<string> {
     if (!event?.payload) return;
 
     if (event.eventName === "error" || event.payload.type === "error") {
-      streamError =
-        "error" in event.payload && event.payload.error?.message
-          ? event.payload.error.message
-          : "Image generation failed";
+      streamError = streamErrorMessage(event.payload);
       return;
     }
 
