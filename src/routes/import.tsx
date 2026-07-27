@@ -56,8 +56,23 @@ function ImportRecipe() {
           setError(t("import_bad_payload"));
           return;
         }
-        const saved = saveRecipe(recipe);
+        // Shared images often 404 or fail to load on the recipient's device.
+        // Drop the incoming image_url and regenerate a fresh hero locally so
+        // the recipe reliably shows a photo. The recipe detail view listens
+        // for `gn:image-updated` and refreshes as soon as the new image lands.
+        const prompt = recipe.image_prompt ?? recipe.title;
+        const saved = saveRecipe({ ...recipe, image_url: null });
         router.navigate({ to: "/recipes/$id", params: { id: saved.id }, replace: true });
+        if (prompt) {
+          genImage({ data: { prompt } })
+            .then((res) => {
+              if (res.image_url) {
+                saveRecipe({ ...saved, image_url: res.image_url });
+              }
+            })
+            .catch((e) => console.error("shared recipe hero image gen failed", e));
+        }
+
       } catch (e) {
         if (!cancelled) setError((e as Error).message || t("import_bad_payload"));
       }
