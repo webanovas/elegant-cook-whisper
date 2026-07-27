@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useRecipes, saveRecipe, type Recipe } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
+import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
 import { RecipeCard } from "@/components/RecipeCard";
 import { LangToggle } from "@/components/LangToggle";
 import { useT, useLang } from "@/lib/i18n";
