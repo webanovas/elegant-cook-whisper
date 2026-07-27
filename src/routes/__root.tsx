@@ -68,15 +68,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      { name: "apple-mobile-web-app-title", content: "Gourmet Notes" },
-      { title: "Gourmet Notes — A private cookbook" },
+      { name: "apple-mobile-web-app-title", content: "MyCookbook" },
+      { title: "MyCookbook — A private cookbook" },
       {
         name: "description",
         content:
           "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step.",
       },
-      { name: "author", content: "Gourmet Notes" },
-      { property: "og:title", content: "Gourmet Notes — A private cookbook" },
+      { name: "author", content: "MyCookbook" },
+      { property: "og:title", content: "MyCookbook — A private cookbook" },
       {
         property: "og:description",
         content:
@@ -84,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Gourmet Notes — A private cookbook" },
+      { name: "twitter:title", content: "MyCookbook — A private cookbook" },
       { name: "twitter:description", content: "A vintage-bound cookbook you keep. Save any recipe from the web, scale portions, and cook step by step." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f1df7459-f261-4336-9323-3ad4f95e5dc8/id-preview-5aef2a82--8a636e3d-14da-4e55-8f02-9e669c3409cb.lovable.app-1784645800319.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f1df7459-f261-4336-9323-3ad4f95e5dc8/id-preview-5aef2a82--8a636e3d-14da-4e55-8f02-9e669c3409cb.lovable.app-1784645800319.png" },
