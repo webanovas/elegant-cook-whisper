@@ -566,6 +566,23 @@ const he: Dict = {
   chef_note: "השף",
   dismiss_consult: "הסר את עצת השף",
   no_hints: "השף לא צירף הערות פנימיות — ראה את הסיכום למעלה.",
+  consult_mode_discuss: "רק לדבר",
+  consult_mode_alter: "לעדכן מתכון",
+  consult_mode_hint_discuss: "שיחה עם השף — שום דבר לא נשמר במתכון.",
+  consult_mode_hint_alter: "השף רשאי להצמיד טיפים למרכיבים ולשלבים.",
+  consult_reply_title: "השף אומר",
+  consult_ask_again: "שאל שוב",
+  consult_close: "סגור",
+  share_recipe: "שתף מתכון",
+  share_copied: "הקישור הועתק",
+  share_copy: "העתק קישור",
+  share_sheet_title: "שתף את המתכון",
+  share_sheet_hint: "כל מי שיפתח את הקישור באפליקציה יקבל עותק של המתכון.",
+  import_saving: "שומר את המתכון…",
+  import_hint: "מוסיף לספר המתכונים שלך.",
+  import_failed: "הייבוא נכשל",
+  import_no_payload: "הקישור לא מכיל מתכון.",
+  import_bad_payload: "הקישור הזה נראה פגום.",
 };
 
 
