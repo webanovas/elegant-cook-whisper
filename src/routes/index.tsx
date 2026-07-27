@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useRecipes, saveRecipe, type Recipe } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
 import { RecipeCard } from "@/components/RecipeCard";
@@ -589,100 +589,168 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
       {hasRecipes && (
         <div className="mt-4 grid gap-4 md:grid-cols-[1fr_320px] items-start">
           {/* Toolbar + collapsible filters/search */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setSearchOpen((v) => !v)}
-                aria-expanded={searchOpen}
-                aria-label={t("search_label")}
-                className={`inline-flex items-center gap-1.5 small-caps text-[10px] rounded-full border px-3 py-1.5 transition-colors ${
-                  searchOpen || searchQ
-                    ? "bg-terracotta text-paper border-terracotta"
-                    : "text-terracotta border-terracotta/40 hover:bg-terracotta hover:text-paper"
-                }`}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.5-3.5" />
-                </svg>
-                <span>{t("search_label")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFiltersOpen((v) => !v)}
-                aria-expanded={filtersOpen}
-                className={`inline-flex items-center gap-1.5 small-caps text-[10px] rounded-full border px-3 py-1.5 transition-colors ${
-                  filtersOpen || anyFilterActive
-                    ? "bg-terracotta text-paper border-terracotta"
-                    : "text-terracotta border-terracotta/40 hover:bg-terracotta hover:text-paper"
-                }`}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 5h18M6 12h12M10 19h4" />
-                </svg>
-                <span>{t("filters_label")}</span>
-                {anyFilterActive && <span className="inline-block w-1.5 h-1.5 rounded-full bg-paper" />}
-              </button>
+          <LayoutGroup>
+            <motion.div layout="position" className="space-y-3">
+              <motion.div layout="position" className="flex items-center gap-2 flex-wrap">
+                <motion.button
+                  layout
+                  type="button"
+                  onClick={() => setSearchOpen((v) => !v)}
+                  aria-expanded={searchOpen}
+                  aria-label={t("search_label")}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                  className={`inline-flex items-center gap-1.5 small-caps text-[10px] rounded-full border px-3 py-1.5 transition-colors ${
+                    searchOpen || searchQ
+                      ? "bg-terracotta text-paper border-terracotta"
+                      : "text-terracotta border-terracotta/40 hover:bg-terracotta hover:text-paper"
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.5-3.5" />
+                  </svg>
+                  <span>{t("search_label")}</span>
+                </motion.button>
+                <motion.button
+                  layout
+                  type="button"
+                  onClick={() => setFiltersOpen((v) => !v)}
+                  aria-expanded={filtersOpen}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                  className={`inline-flex items-center gap-1.5 small-caps text-[10px] rounded-full border px-3 py-1.5 transition-colors ${
+                    filtersOpen || anyFilterActive
+                      ? "bg-terracotta text-paper border-terracotta"
+                      : "text-terracotta border-terracotta/40 hover:bg-terracotta hover:text-paper"
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M3 5h18M6 12h12M10 19h4" />
+                  </svg>
+                  <span>{t("filters_label")}</span>
+                  <AnimatePresence>
+                    {anyFilterActive && (
+                      <motion.span
+                        key="dot"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        className="inline-block w-1.5 h-1.5 rounded-full bg-paper"
+                      />
+                    )}
+                  </AnimatePresence>
+                </motion.button>
 
-              <span className="small-caps text-[10px] text-ink-soft ms-auto">
-                <span dir="ltr">
-                  {filtered.length} {t("of_total")} {recipes.length}
-                </span>
-                {!anyFilterActive && !vibeIds && !searchQ && (
-                  <button
-                    type="button"
-                    onClick={() => setShuffleSeed(Math.floor(Math.random() * 1e6))}
-                    className="ms-3 text-terracotta hover:underline"
+                <motion.span layout className="small-caps text-[10px] text-ink-soft ms-auto">
+                  <motion.span
+                    key={`${filtered.length}-${recipes.length}`}
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.25 }}
+                    dir="ltr"
+                    className="inline-block"
                   >
-                    {t("reshuffle")}
-                  </button>
-                )}
-                {(anyFilterActive || vibeIds || searchQ) && (
-                  <button
-                    type="button"
-                    onClick={reset}
-                    className="ms-3 text-ink-soft/70 hover:text-terracotta"
-                  >
-                    {t("reset_all")}
-                  </button>
-                )}
-              </span>
-            </div>
+                    {filtered.length} {t("of_total")} {recipes.length}
+                  </motion.span>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {!anyFilterActive && !vibeIds && !searchQ ? (
+                      <motion.button
+                        key="reshuffle"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        type="button"
+                        onClick={() => setShuffleSeed(Math.floor(Math.random() * 1e6))}
+                        className="ms-3 text-terracotta hover:underline"
+                      >
+                        {t("reshuffle")}
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        key="reset"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                        type="button"
+                        onClick={reset}
+                        className="ms-3 text-ink-soft/70 hover:text-terracotta"
+                      >
+                        {t("reset_all")}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </motion.span>
+              </motion.div>
 
-            {searchOpen && (
-              <div className="paper-page rounded-[3px] px-4 py-3 sm:px-5 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-ink-soft shrink-0">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.5-3.5" />
-                </svg>
-                <input
-                  type="text"
-                  autoFocus
-                  value={searchQ}
-                  onChange={(e) => setSearchQ(e.target.value)}
-                  placeholder={t("search_ph")}
-                  className="flex-1 min-w-0 bg-transparent py-1 text-sm font-serif italic outline-none placeholder:text-ink-soft/60"
-                />
-                {searchQ && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQ("")}
-                    className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
+              <AnimatePresence initial={false}>
+                {searchOpen && (
+                  <motion.div
+                    key="search-panel"
+                    layout
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ height: { duration: 0.32, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.22 } }}
+                    className="overflow-hidden"
                   >
-                    {t("clear")}
-                  </button>
+                    <div className="paper-page rounded-[3px] px-4 py-3 sm:px-5 flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-ink-soft shrink-0">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.5-3.5" />
+                      </svg>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={searchQ}
+                        onChange={(e) => setSearchQ(e.target.value)}
+                        placeholder={t("search_ph")}
+                        className="flex-1 min-w-0 bg-transparent py-1 text-sm font-serif italic outline-none placeholder:text-ink-soft/60"
+                      />
+                      <AnimatePresence>
+                        {searchQ && (
+                          <motion.button
+                            key="clear-q"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.15 }}
+                            type="button"
+                            onClick={() => setSearchQ("")}
+                            className="small-caps text-[10px] text-ink-soft/70 hover:text-terracotta"
+                          >
+                            {t("clear")}
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
                 )}
-              </div>
-            )}
+              </AnimatePresence>
 
-            {filtersOpen && (
-              <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-6">
-                <QuicknessTabs value={quickIdx} onChange={setQuickIdx} t={t} />
-                <RatingStars value={minRating} onChange={setMinRating} t={t} />
-              </div>
-            )}
-          </div>
+              <AnimatePresence initial={false}>
+                {filtersOpen && (
+                  <motion.div
+                    key="filters-panel"
+                    layout
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ height: { duration: 0.36, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.24 } }}
+                    className="overflow-hidden"
+                  >
+                    <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-6">
+                      <QuicknessTabs value={quickIdx} onChange={setQuickIdx} t={t} />
+                      <RatingStars value={minRating} onChange={setMinRating} t={t} />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </LayoutGroup>
 
           {/* Ask the cook */}
           <div className="paper-page rounded-[3px] px-4 py-4 sm:px-5">
