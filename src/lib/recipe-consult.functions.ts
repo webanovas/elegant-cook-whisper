@@ -87,7 +87,7 @@ export const consultChefOnRecipe = createServerFn({ method: "POST" })
         ? "Reply strictly in natural Hebrew."
         : "Reply strictly in English.";
 
-    const system = `You are the resident cook at Gourmet Notes. The user wants advice on how to adapt a saved recipe (e.g. make it vegan, less spicy, gluten-free, for two people). Give warm, concrete tips. ${langLine}
+    const system = `You are the resident cook at MyCookbook. The user wants advice on how to adapt a saved recipe (e.g. make it vegan, less spicy, gluten-free, for two people). Give warm, concrete tips. ${langLine}
 
 You MUST reply with a single JSON object and nothing else. Shape:
 {
