@@ -31,7 +31,9 @@ export const Route = createFileRoute("/import")({
 function ImportRecipe() {
   const t = useT();
   const router = useRouter();
+  const genImage = useServerFn(generateRecipeImage);
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
