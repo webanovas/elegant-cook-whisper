@@ -16,27 +16,32 @@ function ImportRecipe() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      // Payload lives in the URL hash (?d=... or #d=...) so it never hits any
-      // server and works fully offline once the app is installed.
-      const hash = window.location.hash.replace(/^#/, "");
-      const search = window.location.search.replace(/^\?/, "");
-      const params = new URLSearchParams(hash || search);
-      const encoded = params.get("d") || params.get("data");
-      if (!encoded) {
-        setError(t("import_no_payload"));
-        return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const hash = window.location.hash.replace(/^#/, "");
+        const search = window.location.search.replace(/^\?/, "");
+        const params = new URLSearchParams(hash || search);
+        const encoded = params.get("d") || params.get("data");
+        if (!encoded) {
+          if (!cancelled) setError(t("import_no_payload"));
+          return;
+        }
+        const recipe = await decodeSharedRecipe(encoded);
+        if (cancelled) return;
+        if (!recipe) {
+          setError(t("import_bad_payload"));
+          return;
+        }
+        const saved = saveRecipe(recipe);
+        router.navigate({ to: "/recipes/$id", params: { id: saved.id }, replace: true });
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message || t("import_bad_payload"));
       }
-      const recipe = decodeSharedRecipe(encoded);
-      if (!recipe) {
-        setError(t("import_bad_payload"));
-        return;
-      }
-      const saved = saveRecipe(recipe);
-      router.navigate({ to: "/recipes/$id", params: { id: saved.id }, replace: true });
-    } catch (e) {
-      setError((e as Error).message || t("import_bad_payload"));
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [router, t]);
 
   return (

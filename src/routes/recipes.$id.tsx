@@ -887,7 +887,7 @@ function ShareButton({ recipe }: { recipe: Recipe }) {
 
   async function onShare() {
     const { buildShareUrl } = await import("@/lib/share");
-    const url = buildShareUrl(recipe);
+    const url = await buildShareUrl(recipe);
     const shareData = {
       title: recipe.title,
       text: recipe.description ?? recipe.title,

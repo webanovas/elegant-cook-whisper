@@ -33,8 +33,22 @@ function fromBase64Url(s: string): Uint8Array {
   return out;
 }
 
-export function encodeSharedRecipe(recipe: Recipe): string {
-  const payload: SharedRecipe = {
+async function gzipCompress(bytes: Uint8Array): Promise<Uint8Array> {
+  const cs = new (globalThis as any).CompressionStream("gzip");
+  const stream = new Blob([bytes as BlobPart]).stream().pipeThrough(cs);
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+async function gzipDecompress(bytes: Uint8Array): Promise<Uint8Array> {
+  const ds = new (globalThis as any).DecompressionStream("gzip");
+  const stream = new Blob([bytes as BlobPart]).stream().pipeThrough(ds);
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function toPayload(recipe: Recipe): SharedRecipe {
+  return {
     title: recipe.title,
     description: recipe.description,
     prep_time: recipe.prep_time,
@@ -53,43 +67,66 @@ export function encodeSharedRecipe(recipe: Recipe): string {
     image_prompt: recipe.image_prompt,
     source_url: recipe.source_url,
   };
-  const json = JSON.stringify({ v: 1, r: payload });
+}
+
+function fromPayload(
+  r: SharedRecipe,
+): Omit<Recipe, "id" | "created_at" | "cookbook_id"> {
+  return {
+    title: r.title,
+    description: r.description ?? null,
+    prep_time: r.prep_time ?? null,
+    cook_time: r.cook_time ?? null,
+    servings: typeof r.servings === "number" ? r.servings : 2,
+    ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
+    instructions: Array.isArray(r.instructions) ? r.instructions : [],
+    ingredient_sections: r.ingredient_sections,
+    instruction_sections: r.instruction_sections,
+    tags: Array.isArray(r.tags) ? r.tags : [],
+    image_url: r.image_url ?? null,
+    image_prompt: r.image_prompt ?? null,
+    source_url: r.source_url ?? null,
+  };
+}
+
+// Encoded formats:
+//   "z" + base64url(gzip(json))  — compact, ~4-6× smaller
+//   raw base64url(json)          — legacy fallback
+export async function encodeSharedRecipe(recipe: Recipe): Promise<string> {
+  const json = JSON.stringify({ v: 1, r: toPayload(recipe) });
   const bytes = new TextEncoder().encode(json);
+  try {
+    if (typeof (globalThis as any).CompressionStream === "function") {
+      const gz = await gzipCompress(bytes);
+      return "z" + toBase64Url(gz);
+    }
+  } catch {
+    /* fall through to raw */
+  }
   return toBase64Url(bytes);
 }
 
-export function decodeSharedRecipe(
+export async function decodeSharedRecipe(
   encoded: string,
-): Omit<Recipe, "id" | "created_at" | "cookbook_id"> | null {
+): Promise<Omit<Recipe, "id" | "created_at" | "cookbook_id"> | null> {
   try {
-    const bytes = fromBase64Url(encoded);
-    const json = new TextDecoder().decode(bytes);
+    let jsonBytes: Uint8Array;
+    if (encoded.startsWith("z")) {
+      jsonBytes = await gzipDecompress(fromBase64Url(encoded.slice(1)));
+    } else {
+      jsonBytes = fromBase64Url(encoded);
+    }
+    const json = new TextDecoder().decode(jsonBytes);
     const parsed = JSON.parse(json) as { v?: number; r?: SharedRecipe };
     if (!parsed?.r || typeof parsed.r.title !== "string") return null;
-    const r = parsed.r;
-    return {
-      title: r.title,
-      description: r.description ?? null,
-      prep_time: r.prep_time ?? null,
-      cook_time: r.cook_time ?? null,
-      servings: typeof r.servings === "number" ? r.servings : 2,
-      ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
-      instructions: Array.isArray(r.instructions) ? r.instructions : [],
-      ingredient_sections: r.ingredient_sections,
-      instruction_sections: r.instruction_sections,
-      tags: Array.isArray(r.tags) ? r.tags : [],
-      image_url: r.image_url ?? null,
-      image_prompt: r.image_prompt ?? null,
-      source_url: r.source_url ?? null,
-    };
+    return fromPayload(parsed.r);
   } catch {
     return null;
   }
 }
 
-export function buildShareUrl(recipe: Recipe): string {
-  const encoded = encodeSharedRecipe(recipe);
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "";
+export async function buildShareUrl(recipe: Recipe): Promise<string> {
+  const encoded = await encodeSharedRecipe(recipe);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   return `${origin}/import#d=${encoded}`;
 }
