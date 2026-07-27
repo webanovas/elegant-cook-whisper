@@ -1,4 +1,34 @@
 import type { Recipe } from "./recipes-store";
+import { getRecipeImage, IDB_MARKER } from "./recipe-images";
+
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function resolveShareImage(recipe: Recipe): Promise<string | undefined> {
+  const url = recipe.image_url;
+  if (!url) return undefined;
+  // Local IndexedDB blob — send inline so the server can host it.
+  if (url.startsWith(IDB_MARKER)) {
+    const blob = await getRecipeImage(recipe.id).catch(() => undefined);
+    if (!blob) return undefined;
+    // Cap at ~5MB after base64 (roughly 3.7MB raw) to stay under API limit.
+    if (blob.size > 3_700_000) return undefined;
+    try {
+      return await blobToDataUrl(blob);
+    } catch {
+      return undefined;
+    }
+  }
+  // Inline data URL saved directly on the recipe.
+  if (url.startsWith("data:")) return url;
+  return undefined;
+}
 
 // A minimal shareable recipe payload. We deliberately drop image blobs, notes,
 // overrides, and chef consultations — the recipient gets a clean copy of the
