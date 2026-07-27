@@ -310,6 +310,23 @@ const en: Dict = {
   chef_note: "chef",
   dismiss_consult: "dismiss the chef's advice",
   no_hints: "The chef didn't attach inline tips — see the note above.",
+  consult_mode_discuss: "just discuss",
+  consult_mode_alter: "alter recipe",
+  consult_mode_hint_discuss: "chat with the chef — nothing gets saved to the recipe.",
+  consult_mode_hint_alter: "the chef may pin tips onto ingredients and steps.",
+  consult_reply_title: "the chef says",
+  consult_ask_again: "ask again",
+  consult_close: "close",
+  share_recipe: "share recipe",
+  share_copied: "link copied",
+  share_copy: "copy link",
+  share_sheet_title: "share this recipe",
+  share_sheet_hint: "anyone who opens this link in Gourmet Notes will get a copy of the recipe.",
+  import_saving: "saving the recipe…",
+  import_hint: "adding it to your cookbook.",
+  import_failed: "couldn't import",
+  import_no_payload: "this link doesn't contain a recipe.",
+  import_bad_payload: "this recipe link looks broken.",
 };
 
 
