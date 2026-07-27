@@ -63,21 +63,22 @@ function RecipeDetail() {
 
   useEffect(() => {
     if (!recipe) return;
+    const currentRecipe = recipe;
     let cancelled = false;
 
     async function maybeRefreshCookbookCover() {
-      const refreshKey = `gn:hero-refresh-started:${recipe.id}`;
+      const refreshKey = `gn:hero-refresh-started:${currentRecipe.id}`;
       try {
         if (window.sessionStorage.getItem(refreshKey)) return;
       } catch {
         /* ignore */
       }
 
-      let shouldRefresh = !recipe.image_url;
-      if (recipe.image_url?.startsWith("data:image/svg")) {
+      let shouldRefresh = !currentRecipe.image_url;
+      if (currentRecipe.image_url?.startsWith("data:image/svg")) {
         shouldRefresh = true;
-      } else if (recipe.image_url?.startsWith(IDB_MARKER)) {
-        const blob = await getRecipeImage(recipe.id);
+      } else if (currentRecipe.image_url?.startsWith(IDB_MARKER)) {
+        const blob = await getRecipeImage(currentRecipe.id);
         if (cancelled) return;
         shouldRefresh = !blob || blob.type.includes("svg");
       }
@@ -88,7 +89,7 @@ function RecipeDetail() {
       } catch {
         /* ignore */
       }
-      refreshRecipeHeroImage(recipe).catch((e) =>
+      refreshRecipeHeroImage(currentRecipe).catch((e) =>
         console.error("recipe hero repair failed", e),
       );
     }
