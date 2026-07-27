@@ -35,14 +35,14 @@ function fromBase64Url(s: string): Uint8Array {
 
 async function gzipCompress(bytes: Uint8Array): Promise<Uint8Array> {
   const cs = new (globalThis as any).CompressionStream("gzip");
-  const stream = new Blob([bytes]).stream().pipeThrough(cs);
+  const stream = new Blob([bytes as BlobPart]).stream().pipeThrough(cs);
   const buf = await new Response(stream).arrayBuffer();
   return new Uint8Array(buf);
 }
 
 async function gzipDecompress(bytes: Uint8Array): Promise<Uint8Array> {
   const ds = new (globalThis as any).DecompressionStream("gzip");
-  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  const stream = new Blob([bytes as BlobPart]).stream().pipeThrough(ds);
   const buf = await new Response(stream).arrayBuffer();
   return new Uint8Array(buf);
 }
