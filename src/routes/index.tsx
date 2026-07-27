@@ -452,6 +452,9 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   const [minRating, setMinRating] = useState(0);
   const [shuffleSeed, setShuffleSeed] = useState(() => Math.floor(Math.random() * 1e6));
   const [vibe, setVibe] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
   const [vibeLoading, setVibeLoading] = useState(false);
   const [vibeError, setVibeError] = useState<string | null>(null);
   const [vibeIds, setVibeIds] = useState<string[] | null>(null);
