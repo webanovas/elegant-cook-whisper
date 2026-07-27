@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useRecipes, saveRecipe, type Recipe } from "@/lib/recipes-store";
 import { StarRating } from "@/components/StarRating";
+import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
 import { RecipeCard } from "@/components/RecipeCard";
 import { LangToggle } from "@/components/LangToggle";
 import { useT, useLang } from "@/lib/i18n";
@@ -161,12 +162,18 @@ function ImportCard() {
     setImportingUrl(sourceUrl);
     try {
       const extracted = await extract({ data: { url: sourceUrl } });
-      const saved = saveRecipe({ ...extracted, cookbook_id: "general" });
+      // Save with an instant local cover so navigation never shows a blank slot,
+      // then regenerate a fresh hero image in the background.
+      const saved = saveRecipe({
+        ...extracted,
+        cookbook_id: "general",
+        image_url: createRecipeCoverDataUrl(extracted),
+      });
       setUrl("");
       router.navigate({ to: "/recipes/$id", params: { id: saved.id } });
-      // Generate hero image in the background so navigation is instant.
-      if (extracted.image_prompt) {
-        genImage({ data: { prompt: extracted.image_prompt } })
+      const prompt = extracted.image_prompt ?? extracted.title;
+      if (prompt) {
+        genImage({ data: { prompt } })
           .then((res) => {
             if (res.image_url) {
               saveRecipe({ ...saved, image_url: res.image_url });
