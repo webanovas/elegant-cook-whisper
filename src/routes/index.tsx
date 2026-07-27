@@ -480,6 +480,18 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
       const n = parsePrepMinutes(r.prep_time);
       if (n === null || n > maxPrep) return false;
     }
+    const q = searchQ.trim().toLowerCase();
+    if (q) {
+      const hay = [
+        r.title,
+        r.description ?? "",
+        (r.tags ?? []).join(" "),
+        (r.ingredients ?? []).map((i) => i.name).join(" "),
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   };
 
