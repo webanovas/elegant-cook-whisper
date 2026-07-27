@@ -89,6 +89,42 @@ function fromPayload(
   };
 }
 
+async function createShortShare(recipe: Recipe): Promise<string> {
+  const res = await fetch("/api/public/recipe-share", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ recipe: toPayload(recipe) }),
+  });
+
+  const json = (await res.json().catch(() => ({}))) as {
+    code?: unknown;
+    error?: unknown;
+  };
+
+  if (!res.ok || typeof json.code !== "string") {
+    throw new Error(
+      typeof json.error === "string"
+        ? json.error
+        : "Could not create a share link. Please try again.",
+    );
+  }
+
+  return json.code;
+}
+
+export async function fetchSharedRecipeByCode(
+  code: string,
+): Promise<Omit<Recipe, "id" | "created_at" | "cookbook_id"> | null> {
+  if (!/^[A-Za-z0-9_-]{8,24}$/.test(code)) return null;
+
+  const res = await fetch(`/api/public/recipe-share?s=${encodeURIComponent(code)}`);
+  if (!res.ok) return null;
+
+  const json = (await res.json().catch(() => ({}))) as { recipe?: unknown };
+  if (!json.recipe) return null;
+  return fromPayload(json.recipe as SharedRecipe);
+}
+
 // Encoded formats:
 //   "z" + base64url(gzip(json))  — compact, ~4-6× smaller
 //   raw base64url(json)          — legacy fallback
@@ -126,7 +162,7 @@ export async function decodeSharedRecipe(
 }
 
 export async function buildShareUrl(recipe: Recipe): Promise<string> {
-  const encoded = await encodeSharedRecipe(recipe);
+  const code = await createShortShare(recipe);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/import#d=${encoded}`;
+  return `${origin}/import?s=${code}`;
 }
