@@ -881,6 +881,52 @@ function ConsultModal({
   );
 }
 
+function ShareButton({ recipe }: { recipe: Recipe }) {
+  const t = useT();
+  const [copied, setCopied] = useState(false);
+
+  async function onShare() {
+    const { buildShareUrl } = await import("@/lib/share");
+    const url = buildShareUrl(recipe);
+    const shareData = {
+      title: recipe.title,
+      text: recipe.description ?? recipe.title,
+      url,
+    };
+    try {
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function"
+      ) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch {
+      /* user cancelled or share failed — fall through to copy */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      window.prompt(t("share_sheet_title"), url);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onShare}
+      aria-label={t("share_recipe")}
+      title={t("share_recipe")}
+      className="absolute top-4 end-4 bg-background/80 backdrop-blur-md h-9 px-3 rounded-full inline-flex items-center gap-1.5 text-[11px] shadow-sm small-caps text-ink hover:text-terracotta transition-colors"
+    >
+      <span aria-hidden className="text-sm leading-none">↗</span>
+      <span>{copied ? t("share_copied") : t("share_recipe")}</span>
+    </button>
+  );
+}
+
 
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (
