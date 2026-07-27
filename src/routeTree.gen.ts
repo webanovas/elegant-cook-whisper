@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ImportRouteImport } from './routes/import'
 import { Route as GroceryRouteImport } from './routes/grocery'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,6 +19,11 @@ import { Route as RecipesIdRouteImport } from './routes/recipes.$id'
 import { Route as BooksIdRouteImport } from './routes/books.$id'
 import { Route as RecipesIdCookRouteImport } from './routes/recipes.$id.cook'
 
+const ImportRoute = ImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GroceryRoute = GroceryRouteImport.update({
   id: '/grocery',
   path: '/grocery',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
   '/grocery': typeof GroceryRoute
+  '/import': typeof ImportRoute
   '/books/$id': typeof BooksIdRoute
   '/recipes/$id': typeof RecipesIdRouteWithChildren
   '/recipes/new': typeof RecipesNewRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
   '/grocery': typeof GroceryRoute
+  '/import': typeof ImportRoute
   '/books/$id': typeof BooksIdRoute
   '/recipes/$id': typeof RecipesIdRouteWithChildren
   '/recipes/new': typeof RecipesNewRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
   '/grocery': typeof GroceryRoute
+  '/import': typeof ImportRoute
   '/books/$id': typeof BooksIdRoute
   '/recipes/$id': typeof RecipesIdRouteWithChildren
   '/recipes/new': typeof RecipesNewRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/chat'
     | '/grocery'
+    | '/import'
     | '/books/$id'
     | '/recipes/$id'
     | '/recipes/new'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/chat'
     | '/grocery'
+    | '/import'
     | '/books/$id'
     | '/recipes/$id'
     | '/recipes/new'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/chat'
     | '/grocery'
+    | '/import'
     | '/books/$id'
     | '/recipes/$id'
     | '/recipes/new'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatRoute: typeof ChatRoute
   GroceryRoute: typeof GroceryRoute
+  ImportRoute: typeof ImportRoute
   BooksIdRoute: typeof BooksIdRoute
   RecipesIdRoute: typeof RecipesIdRouteWithChildren
   RecipesNewRoute: typeof RecipesNewRoute
@@ -135,6 +148,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/import': {
+      id: '/import'
+      path: '/import'
+      fullPath: '/import'
+      preLoaderRoute: typeof ImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/grocery': {
       id: '/grocery'
       path: '/grocery'
@@ -210,6 +230,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRoute,
   GroceryRoute: GroceryRoute,
+  ImportRoute: ImportRoute,
   BooksIdRoute: BooksIdRoute,
   RecipesIdRoute: RecipesIdRouteWithChildren,
   RecipesNewRoute: RecipesNewRoute,
