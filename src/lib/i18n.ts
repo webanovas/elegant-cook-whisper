@@ -89,6 +89,8 @@ const en: Dict = {
   entries: "entries",
   // search
   search_all: "search all recipes",
+  filters_label: "filters",
+  search_label: "search",
   dish_type: "dish type",
   all_types: "all types",
   prep_length: "prep length",
