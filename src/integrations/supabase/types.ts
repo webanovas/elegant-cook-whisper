@@ -37,7 +37,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_recipe_share: { Args: { _recipe: Json }; Returns: string }
+      get_recipe_share: { Args: { _id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
