@@ -349,6 +349,8 @@ const he: Dict = {
   entries: "מתכונים",
 
   search_all: "חיפוש בכל המתכונים",
+  filters_label: "פילטרים",
+  search_label: "חיפוש",
   dish_type: "סוג מנה",
   all_types: "כל הסוגים",
   prep_length: "זמן הכנה",
