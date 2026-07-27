@@ -2,7 +2,8 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
 import { saveRecipe } from "@/lib/recipes-store";
-import { scanRecipeFromImages } from "@/lib/recipes.functions";
+import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
+import { scanRecipeFromImages, generateRecipeImage } from "@/lib/recipes.functions";
 import { LangToggle } from "@/components/LangToggle";
 import { useT } from "@/lib/i18n";
 
