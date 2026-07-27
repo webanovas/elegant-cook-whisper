@@ -10,7 +10,7 @@ export const Route = createFileRoute("/recipes/scan")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Scan a recipe — MyCookbook" },
+      { title: "Scan a recipe — Gourmet Notes" },
       { name: "description", content: "Snap a photo of a recipe and let the cook transcribe it." },
     ],
   }),

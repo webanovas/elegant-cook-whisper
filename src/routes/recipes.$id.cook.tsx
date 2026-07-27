@@ -8,7 +8,7 @@ import { TimedText } from "@/components/TimedText";
 
 export const Route = createFileRoute("/recipes/$id/cook")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Cook Mode — MyCookbook" }] }),
+  head: () => ({ meta: [{ title: "Cook Mode — Gourmet Notes" }] }),
   component: CookMode,
 });
 

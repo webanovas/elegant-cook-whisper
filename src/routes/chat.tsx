@@ -9,7 +9,7 @@ import { useT, useLang } from "@/lib/i18n";
 export const Route = createFileRoute("/chat")({
   head: () => ({
     meta: [
-      { title: "Ask the Cook — MyCookbook" },
+      { title: "Ask the Cook — Gourmet Notes" },
       {
         name: "description",
         content:

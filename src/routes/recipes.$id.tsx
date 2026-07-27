@@ -29,7 +29,7 @@ import type { Ingredient } from "@/lib/recipes.functions";
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
   head: () => ({
-    meta: [{ title: "Recipe — MyCookbook" }],
+    meta: [{ title: "Recipe — Gourmet Notes" }],
   }),
   component: RecipeDetail,
 });

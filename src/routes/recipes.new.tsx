@@ -8,7 +8,7 @@ export const Route = createFileRoute("/recipes/new")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Write a new recipe — MyCookbook" },
+      { title: "Write a new recipe — Gourmet Notes" },
       { name: "description", content: "Add your own recipe by hand." },
     ],
   }),
