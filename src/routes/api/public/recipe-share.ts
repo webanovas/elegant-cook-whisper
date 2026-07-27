@@ -105,8 +105,14 @@ export const Route = createFileRoute("/api/public/recipe-share")({
         let input: unknown;
         try {
           input = JSON.parse(await request.text());
-        } catch {
-          return json({ error: "Invalid request" }, { status: 400 });
+        } catch (error) {
+          return json(
+            {
+              error:
+                error instanceof Error ? error.message : "Invalid request",
+            },
+            { status: 400 },
+          );
         }
 
         const parsed = CreateShareSchema.safeParse(input);
