@@ -103,7 +103,7 @@ export const Route = createFileRoute("/api/public/recipe-share")({
         }
 
         const length = Number(request.headers.get("content-length") ?? 0);
-        if (Number.isFinite(length) && length > 80_000) {
+        if (Number.isFinite(length) && length > 8_000_000) {
           return json({ error: "Recipe is too large to share" }, { status: 413 });
         }
 
@@ -126,11 +126,45 @@ export const Route = createFileRoute("/api/public/recipe-share")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // If the client sent an inline image data URL, upload it to the
+        // share bucket and rewrite recipe.image_url to a public URL so
+        // recipients see the original photo.
+        let recipeToStore = parsed.data.recipe;
+        const dataUrl = parsed.data.image_data_url;
+        if (dataUrl) {
+          try {
+            const match = /^data:(image\/(png|jpe?g|webp|gif));base64,(.+)$/i.exec(dataUrl);
+            if (match) {
+              const mime = match[1].toLowerCase();
+              const ext = mime === "image/jpeg" ? "jpg" : mime.split("/")[1];
+              const b64 = match[3];
+              const binary = atob(b64);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              const path = `${makeShareCode(16)}.${ext}`;
+              const { error: upErr } = await supabaseAdmin.storage
+                .from("recipe-share-images")
+                .upload(path, bytes, { contentType: mime, upsert: false });
+              if (!upErr) {
+                const { data: pub } = supabaseAdmin.storage
+                  .from("recipe-share-images")
+                  .getPublicUrl(path);
+                if (pub?.publicUrl) {
+                  recipeToStore = { ...recipeToStore, image_url: pub.publicUrl };
+                }
+              }
+            }
+          } catch {
+            /* fall through — share still works, just without the image */
+          }
+        }
+
         for (let attempt = 0; attempt < 4; attempt++) {
           const id = makeShareCode();
           const { error } = await supabaseAdmin.from("recipe_shares").insert({
             id,
-            recipe: parsed.data.recipe,
+            recipe: recipeToStore,
           });
 
           if (!error) return json({ code: id }, { status: 201 });
