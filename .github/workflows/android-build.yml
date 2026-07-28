@@ -33,10 +33,21 @@ jobs:
       - name: Build Web Assets
         run: npm run build || true
 
+      - name: Prepare Dist Directory for Capacitor
+        run: |
+          mkdir -p dist
+          if [ -d ".output/public" ]; then
+            cp -r .output/public/* dist/
+          fi
+          if [ ! -f "dist/index.html" ]; then
+            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>App</title></head><body><div id="root"></div><script type="module" src="/_build/assets/client.js"></script></body></html>' > dist/index.html
+          fi
+
       - name: Add Android Platform & Sync
         run: |
-          npx --yes @capacitor/cli add android || true
-          npx --yes @capacitor/cli sync android
+          npx cap init "Gourmet Notes" "com.gourmetnotes.app" --web-dir "dist" || true
+          npx cap add android || true
+          npx cap sync android
 
       - name: Build Android App Bundle (AAB)
         run: |
