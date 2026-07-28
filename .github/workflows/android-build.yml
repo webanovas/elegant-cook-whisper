@@ -33,8 +33,10 @@ jobs:
       - name: Build Web Assets
         run: npm run build || true
 
-      - name: Capacitor Sync
-        run: npx --yes @capacitor/cli sync android
+      - name: Add Android Platform & Sync
+        run: |
+          npx --yes @capacitor/cli add android || true
+          npx --yes @capacitor/cli sync android
 
       - name: Build Android App Bundle (AAB)
         run: |
