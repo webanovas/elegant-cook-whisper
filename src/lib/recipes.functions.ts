@@ -35,12 +35,17 @@ export interface ExtractedRecipe {
 
 export const extractRecipe = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
-    z.object({ url: z.string().url("Please enter a valid URL") }).parse(input),
+    z
+      .object({
+        url: z.string().url("Please enter a valid URL"),
+        lang: z.enum(["en", "he"]).optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data }): Promise<ExtractedRecipe> => {
     const { fetchPageText, extractRecipeFromText } = await import("./recipes.server");
     const text = await fetchPageText(data.url);
-    const extracted = await extractRecipeFromText(text, data.url);
+    const extracted = await extractRecipeFromText(text, data.url, data.lang ?? "en");
 
     // Hero image is generated separately (generateRecipeImage) so clipping
     // returns as fast as possible — image gen is the slowest step.
