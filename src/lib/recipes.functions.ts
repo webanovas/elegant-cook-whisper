@@ -89,12 +89,13 @@ export const scanRecipeFromImages = createServerFn({ method: "POST" })
           .array(z.string().min(20))
           .min(1, "Please add at least one photo")
           .max(6),
+        lang: z.enum(["en", "he"]).optional(),
       })
       .parse(input),
   )
   .handler(async ({ data }): Promise<ScannedRecipeResult> => {
     const { extractRecipeFromImages } = await import("./recipes.server");
-    const scanned = await extractRecipeFromImages(data.images);
+    const scanned = await extractRecipeFromImages(data.images, data.lang ?? "en");
     return {
       title: scanned.title,
       description: scanned.description,
