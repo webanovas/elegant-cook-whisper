@@ -241,14 +241,15 @@ export interface ScannedRecipe extends ExtractedRecipe {
 
 export async function extractRecipeFromImages(
   images: string[], // data URLs or absolute https URLs
+  lang: string = "en",
 ): Promise<ScannedRecipe> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY is not configured");
 
   const prompt = `You are transcribing a recipe from photograph(s) of a page, screenshot, or handwritten note.
 Return ONLY a clean JSON object (no markdown fences, no commentary) with these exact keys:
-- title (string) — keep it in its original language.
-- description (short overview, 1-2 sentences, in the recipe's original language; "" if unclear)
+- title (string)
+- description (short overview, 1-2 sentences; "" if unclear)
 - prep_time (string like "15m"; "" if unknown)
 - cook_time (string like "30m"; "" if unknown)
 - servings (integer; guess a sensible default like 2 if unknown)
@@ -258,6 +259,8 @@ Return ONLY a clean JSON object (no markdown fences, no commentary) with these e
 - food_style_image_prompt (a description in English for generating an aesthetic, editorial food photography image of this dish)
 - confidence (number between 0 and 1: how sure you are the transcription is faithful to the source. Use <0.6 if the image is blurry, cropped, in handwriting you struggled with, or missing sections.)
 - warnings (array of short strings describing anything uncertain — e.g. "amounts for step 2 were illegible", "cook time not visible", "ingredient list may be incomplete". Empty array if everything is clear.)
+
+${languageInstruction(lang)} The 'warnings' strings must also be written in that language.
 
 If — and ONLY if — the recipe has clearly labelled multiple components, also return:
 - ingredient_sections and instruction_sections (same shape as before).
