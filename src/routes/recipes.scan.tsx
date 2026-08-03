@@ -6,7 +6,7 @@ import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
 import { refreshRecipeHeroImage } from "@/lib/recipe-hero";
 import { scanRecipeFromImages } from "@/lib/recipes.functions";
 import { LangToggle } from "@/components/LangToggle";
-import { useT } from "@/lib/i18n";
+import { useT, useLang } from "@/lib/i18n";
 
 export const Route = createFileRoute("/recipes/scan")({
   ssr: false,
@@ -55,6 +55,7 @@ async function fileToOptimizedDataUrl(file: File): Promise<string> {
 function ScanRecipePage() {
   const router = useRouter();
   const t = useT();
+  const lang = useLang();
   const scan = useServerFn(scanRecipeFromImages);
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,7 +85,7 @@ function ScanRecipePage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await scan({ data: { images } });
+      const result = await scan({ data: { images, lang } });
       const saved = saveRecipe({
         title: result.title,
         description: result.description,

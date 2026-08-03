@@ -153,13 +153,19 @@ export async function fetchPageText(url: string): Promise<string> {
 }
 
 
+export function languageInstruction(lang: string): string {
+  const name = lang === "he" ? "Hebrew (עברית)" : "English";
+  return `OUTPUT LANGUAGE: write EVERY piece of human-readable text in ${name} — title, description, tags, section titles, ingredient names, units and every instruction step. Translate naturally and idiomatically if the source is in another language; never mix languages, never leave the original language in place. Keep numbers as digits. The only exception is food_style_image_prompt, which must always be in English.`;
+}
+
 export async function extractRecipeFromText(
   pageText: string,
   sourceUrl: string,
+  lang: string = "en",
 ): Promise<ExtractedRecipe> {
   const prompt = `Extract the recipe from this content. Return ONLY a clean JSON object (no markdown fences, no commentary) with these exact keys:
-- title (string) — keep it in its original language.
-- description (short overview, 1-2 sentences, in the recipe's original language)
+- title (string)
+- description (short overview, 1-2 sentences)
 - prep_time (string like "15m")
 - cook_time (string like "30m")
 - servings (integer)
@@ -167,6 +173,8 @@ export async function extractRecipeFromText(
 - instructions (array of clear step-by-step strings) — FLAT list of every step
 - tags (array of short tags like "Vegan", "Italian", "Quick")
 - food_style_image_prompt (a description in English for generating an aesthetic, editorial food photography image of this dish)
+
+${languageInstruction(lang)}
 
 If — and ONLY if — the recipe has clearly labelled multiple components (e.g. "For the meatballs" + "For the sauce", cake + frosting, dough + filling), also return:
 - ingredient_sections: array of { title: string, items: [{amount, unit, name}, ...] }
@@ -233,14 +241,15 @@ export interface ScannedRecipe extends ExtractedRecipe {
 
 export async function extractRecipeFromImages(
   images: string[], // data URLs or absolute https URLs
+  lang: string = "en",
 ): Promise<ScannedRecipe> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY is not configured");
 
   const prompt = `You are transcribing a recipe from photograph(s) of a page, screenshot, or handwritten note.
 Return ONLY a clean JSON object (no markdown fences, no commentary) with these exact keys:
-- title (string) — keep it in its original language.
-- description (short overview, 1-2 sentences, in the recipe's original language; "" if unclear)
+- title (string)
+- description (short overview, 1-2 sentences; "" if unclear)
 - prep_time (string like "15m"; "" if unknown)
 - cook_time (string like "30m"; "" if unknown)
 - servings (integer; guess a sensible default like 2 if unknown)
@@ -250,6 +259,8 @@ Return ONLY a clean JSON object (no markdown fences, no commentary) with these e
 - food_style_image_prompt (a description in English for generating an aesthetic, editorial food photography image of this dish)
 - confidence (number between 0 and 1: how sure you are the transcription is faithful to the source. Use <0.6 if the image is blurry, cropped, in handwriting you struggled with, or missing sections.)
 - warnings (array of short strings describing anything uncertain — e.g. "amounts for step 2 were illegible", "cook time not visible", "ingredient list may be incomplete". Empty array if everything is clear.)
+
+${languageInstruction(lang)} The 'warnings' strings must also be written in that language.
 
 If — and ONLY if — the recipe has clearly labelled multiple components, also return:
 - ingredient_sections and instruction_sections (same shape as before).
