@@ -36,40 +36,38 @@ function LibraryPage() {
   const t = useT();
 
   return (
-    <div className="min-h-screen py-8 sm:py-12 px-4">
-      <div className="max-w-[760px] mx-auto flex justify-between items-center mb-2">
-        <Link
-          to="/grocery"
-          className="small-caps text-[11px] text-ink-soft hover:text-terracotta inline-flex items-center gap-1.5"
-        >
-          <span>🛒</span>
-          <span>{t("grocery_link")}</span>
-        </Link>
-        <LangToggle />
-      </div>
+    <div className="min-h-screen py-4 sm:py-6 px-4">
+      <div className="max-w-[1100px] mx-auto">
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            to="/grocery"
+            className="small-caps text-[10px] text-ink-soft hover:text-terracotta inline-flex items-center gap-1.5"
+          >
+            <span>🛒</span>
+            <span>{t("grocery_link")}</span>
+          </Link>
+          <Link
+            to="/chat"
+            className="small-caps text-[10px] text-terracotta hover:underline ms-auto"
+          >
+            {t("ask_the_cook")}
+          </Link>
+          <LangToggle />
+        </div>
 
-      <ProudHeader count={recipes.length} />
+        <ProudHeader count={recipes.length} />
 
-      <div className="mt-10 max-w-[1100px] mx-auto">
-        <div className="max-w-[760px] mx-auto">
+        <div className="mt-3 space-y-2">
           <ImportCard />
+          <AchievementsStrip recipes={recipes} />
         </div>
 
         <FilterableGallery recipes={recipes} />
 
-        <div className="mt-14 text-center">
-          <Link
-            to="/chat"
-            className="inline-flex items-center gap-2 small-caps text-[11px] text-ink-soft hover:text-terracotta transition-colors"
-          >
-            {t("ask_the_cook")}
-          </Link>
-        </div>
+        <p className="mt-10 text-center small-caps text-[10px] text-ink-soft/70">
+          {t("kept_privately")}
+        </p>
       </div>
-
-      <p className="mt-14 text-center small-caps text-[10px] text-ink-soft/70">
-        {t("kept_privately")}
-      </p>
     </div>
   );
 }
@@ -101,39 +99,33 @@ function ProudHeader({ count }: { count: number }) {
   };
 
   return (
-    <header className="text-center max-w-[560px] mx-auto">
-      <p className="small-caps text-[11px] text-terracotta">{t("gourmet_notes")}</p>
-      <h1 className="mt-2 font-serif text-[3rem] sm:text-[3.4rem] leading-[0.95] tracking-tight italic">
-        {t("your_library")}
-      </h1>
-      <div className="mx-auto mt-5 flex items-center gap-3 max-w-[240px]">
-        <span className="flex-1 h-px bg-rule/60" />
-        <span className="text-gold text-lg">❦</span>
-        <span className="flex-1 h-px bg-rule/60" />
-      </div>
-
-      <motion.div
+    <header className="mt-2 flex items-center gap-3 border-b border-rule/50 pb-3">
+      <motion.span
         key={count}
-        initial={{ opacity: 0, y: 6 }}
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mt-6 flex flex-col items-center"
+        transition={{ duration: 0.35 }}
+        dir="ltr"
+        className="font-serif italic text-[2.6rem] sm:text-[3rem] leading-none tabular-nums text-terracotta shrink-0"
       >
-        <div className="flex items-baseline gap-3">
-          <span
-            dir="ltr"
-            className="font-serif italic text-[5rem] sm:text-[6rem] leading-none tabular-nums text-terracotta drop-shadow-[0_2px_0_rgba(168,93,68,0.15)]"
-          >
-            {count}
-          </span>
-          <span className="small-caps text-[11px] text-ink-soft">
+        {count}
+      </motion.span>
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <h1 className="font-serif italic text-[1.4rem] sm:text-[1.7rem] leading-none tracking-tight">
+            {t("your_library")}
+          </h1>
+          <span className="small-caps text-[10px] text-ink-soft">
             {count === 1 ? t("recipe_word") : t("recipes_word")}
           </span>
         </div>
-        <p className="mt-3 font-serif italic text-[14px] text-ink-soft">
+        <p className="mt-1 font-serif italic text-[12px] text-ink-soft leading-snug">
           {t(tierKey[tier])}
         </p>
-      </motion.div>
+      </div>
+      <span className="text-gold text-base ms-auto shrink-0" aria-hidden="true">
+        ❦
+      </span>
     </header>
   );
 }
