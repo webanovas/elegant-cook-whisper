@@ -8,6 +8,7 @@ import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
 import { refreshRecipeHeroImage } from "@/lib/recipe-hero";
 import { RecipeCard } from "@/components/RecipeCard";
 import { LangToggle } from "@/components/LangToggle";
+import { AchievementsStrip } from "@/components/Achievements";
 import { useT, useLang } from "@/lib/i18n";
 import {
   extractRecipe,
