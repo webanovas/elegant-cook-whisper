@@ -136,6 +136,7 @@ function ProudHeader({ count }: { count: number }) {
 function ImportCard() {
   const router = useRouter();
   const t = useT();
+  const lang = useLang();
   const extract = useServerFn(extractRecipe);
   const search = useServerFn(searchRecipesOnWeb);
   const [mode, setMode] = useState<"url" | "search">("url");
@@ -153,7 +154,7 @@ function ImportCard() {
     setError(null);
     setImportingUrl(sourceUrl);
     try {
-      const extracted = await extract({ data: { url: sourceUrl } });
+      const extracted = await extract({ data: { url: sourceUrl, lang } });
       // Save with an instant local cover so navigation never shows a blank slot,
       // then regenerate a fresh hero image in the background.
       const saved = saveRecipe({
@@ -195,7 +196,7 @@ function ImportCard() {
   }
 
   return (
-    <section className="mb-8 paper-page rounded-[3px] overflow-hidden">
+    <section className="paper-page rounded-[3px] overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
