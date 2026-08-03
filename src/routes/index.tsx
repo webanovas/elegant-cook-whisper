@@ -8,7 +8,7 @@ import { createRecipeCoverDataUrl } from "@/lib/recipe-images";
 import { refreshRecipeHeroImage } from "@/lib/recipe-hero";
 import { RecipeCard } from "@/components/RecipeCard";
 import { LangToggle } from "@/components/LangToggle";
-import { AchievementsStrip } from "@/components/Achievements";
+import { AchievementsPill, AchievementsPanel } from "@/components/Achievements";
 import { useT, useLang } from "@/lib/i18n";
 import {
   extractRecipe,
@@ -35,32 +35,75 @@ export const Route = createFileRoute("/")({
 function LibraryPage() {
   const recipes = useRecipes();
   const t = useT();
+  const [achOpen, setAchOpen] = useState(false);
+
+  const count = recipes.length;
+  const tierKey =
+    count === 0
+      ? "tier_empty"
+      : count < 5
+        ? "tier_seedling"
+        : count < 15
+          ? "tier_growing"
+          : count < 40
+            ? "tier_flourishing"
+            : count < 100
+              ? "tier_abundant"
+              : "tier_legendary";
 
   return (
-    <div className="min-h-screen py-4 sm:py-6 px-4">
+    <div className="min-h-screen py-5 px-4">
       <div className="max-w-[1100px] mx-auto">
-        <div className="flex items-center justify-between gap-3">
-          <Link
-            to="/grocery"
-            className="small-caps text-[10px] text-ink-soft hover:text-terracotta inline-flex items-center gap-1.5"
+        <header className="flex items-center gap-3 border-b border-rule/50 pb-3">
+          <motion.span
+            key={count}
+            initial={{ opacity: 0, y: 3 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            dir="ltr"
+            className="font-serif italic text-[2.4rem] leading-none tabular-nums text-terracotta shrink-0"
           >
-            <span>🛒</span>
-            <span>{t("grocery_link")}</span>
-          </Link>
-          <Link
-            to="/chat"
-            className="small-caps text-[10px] text-terracotta hover:underline ms-auto"
-          >
-            {t("ask_the_cook")}
-          </Link>
-          <LangToggle />
-        </div>
+            {count}
+          </motion.span>
+          <div className="min-w-0">
+            <h1 className="font-serif italic text-[1.35rem] leading-none tracking-tight">
+              {t("your_library")}
+            </h1>
+            <p className="mt-1 font-serif italic text-[11px] text-ink-soft leading-snug truncate">
+              {t(tierKey)}
+            </p>
+          </div>
 
-        <ProudHeader count={recipes.length} />
+          <div className="ms-auto flex items-center gap-1.5 shrink-0">
+            <AchievementsPill
+              recipes={recipes}
+              open={achOpen}
+              onToggle={() => setAchOpen((o) => !o)}
+            />
+            <Link
+              to="/grocery"
+              aria-label={t("grocery_link")}
+              title={t("grocery_link")}
+              className="inline-flex items-center justify-center rounded-full border border-rule/50 w-[26px] h-[26px] text-[11px] text-ink-soft hover:text-terracotta transition-colors"
+            >
+              🛒
+            </Link>
+            <Link
+              to="/chat"
+              aria-label={t("ask_the_cook")}
+              title={t("ask_the_cook")}
+              className="inline-flex items-center justify-center rounded-full border border-terracotta/40 w-[26px] h-[26px] text-[11px] text-terracotta hover:bg-terracotta hover:text-paper transition-colors"
+            >
+              ✦
+            </Link>
+            <LangToggle />
+          </div>
+        </header>
 
-        <div className="mt-3 space-y-2">
+        <AchievementsPanel recipes={recipes} open={achOpen} />
+
+        <div className="mt-3">
           <ImportCard />
-          <AchievementsStrip recipes={recipes} />
         </div>
 
         <FilterableGallery recipes={recipes} />
@@ -73,63 +116,6 @@ function LibraryPage() {
   );
 }
 
-/* ------------------------- proud header w/ counter ------------------------ */
-
-function ProudHeader({ count }: { count: number }) {
-  const t = useT();
-  const tier =
-    count === 0
-      ? "empty"
-      : count < 5
-        ? "seedling"
-        : count < 15
-          ? "growing"
-          : count < 40
-            ? "flourishing"
-            : count < 100
-              ? "abundant"
-              : "legendary";
-
-  const tierKey: Record<typeof tier, string> = {
-    empty: "tier_empty",
-    seedling: "tier_seedling",
-    growing: "tier_growing",
-    flourishing: "tier_flourishing",
-    abundant: "tier_abundant",
-    legendary: "tier_legendary",
-  };
-
-  return (
-    <header className="mt-2 flex items-center gap-3 border-b border-rule/50 pb-3">
-      <motion.span
-        key={count}
-        initial={{ opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        dir="ltr"
-        className="font-serif italic text-[2.6rem] sm:text-[3rem] leading-none tabular-nums text-terracotta shrink-0"
-      >
-        {count}
-      </motion.span>
-      <div className="min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <h1 className="font-serif italic text-[1.4rem] sm:text-[1.7rem] leading-none tracking-tight">
-            {t("your_library")}
-          </h1>
-          <span className="small-caps text-[10px] text-ink-soft">
-            {count === 1 ? t("recipe_word") : t("recipes_word")}
-          </span>
-        </div>
-        <p className="mt-1 font-serif italic text-[12px] text-ink-soft leading-snug">
-          {t(tierKey[tier])}
-        </p>
-      </div>
-      <span className="text-gold text-base ms-auto shrink-0" aria-hidden="true">
-        ❦
-      </span>
-    </header>
-  );
-}
 
 /* --------------------------------- import --------------------------------- */
 
