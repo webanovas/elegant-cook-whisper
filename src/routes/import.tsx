@@ -11,15 +11,15 @@ export const Route = createFileRoute("/import")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Import Recipe — Gourmet Notes" },
+      { title: "Import Recipe — CookNotes" },
       {
         name: "description",
-        content: "Open a shared Gourmet Notes recipe and save it privately to this device.",
+        content: "Open a shared CookNotes recipe and save it privately to this device.",
       },
-      { property: "og:title", content: "Import Recipe — Gourmet Notes" },
+      { property: "og:title", content: "Import Recipe — CookNotes" },
       {
         property: "og:description",
-        content: "Open a shared Gourmet Notes recipe and save it privately to this device.",
+        content: "Open a shared CookNotes recipe and save it privately to this device.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

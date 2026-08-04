@@ -1,6 +1,6 @@
 {
-  "name": "Gourmet Notes",
-  "short_name": "Gourmet Notes",
+  "name": "CookNotes",
+  "short_name": "CookNotes",
   "description": "A vintage-bound private cookbook.",
   "start_url": "/",
   "scope": "/",

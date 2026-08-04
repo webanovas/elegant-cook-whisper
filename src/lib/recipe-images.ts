@@ -40,7 +40,7 @@ export function createRecipeCoverDataUrl(recipe: {
   description?: string | null;
 }): string {
   const titleLines = wrapSvgText(recipe.title || "Recipe", 18);
-  const tag = recipe.tags?.[0] || recipe.description || "Gourmet Notes";
+  const tag = recipe.tags?.[0] || recipe.description || "CookNotes";
   const initial = (recipe.title || "G").trim().slice(0, 1).toLocaleUpperCase();
   const titleTspans = titleLines
     .map(

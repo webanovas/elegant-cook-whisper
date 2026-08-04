@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Gourmet Notes — Your private recipe library" },
+      { title: "CookNotes — Your private recipe library" },
       {
         name: "description",
         content:
