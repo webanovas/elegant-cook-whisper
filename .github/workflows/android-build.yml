@@ -45,7 +45,7 @@ jobs:
 
       - name: Add Android Platform & Sync
         run: |
-          npx cap init "Gourmet Notes" "com.gourmetnotes.app" --web-dir "dist" || true
+          npx cap init "Gourmet Notes" "com.siterix.cooknotes" --web-dir "dist" || true
           npx cap add android || true
           npx cap sync android
 
