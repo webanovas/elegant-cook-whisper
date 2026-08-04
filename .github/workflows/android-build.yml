@@ -49,14 +49,64 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Build Android App Bundle (AAB)
+      - name: Decode Release Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Missing KEYSTORE_BASE64 secret. Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > $RUNNER_TEMP/release.keystore
+
+      - name: Configure Gradle Signing
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          cat >> android/gradle.properties <<EOF
+          RELEASE_STORE_FILE=$RUNNER_TEMP/release.keystore
+          RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD
+          RELEASE_KEY_ALIAS=$KEY_ALIAS
+          RELEASE_KEY_PASSWORD=$KEY_PASSWORD
+          EOF
+          python3 - <<'PY'
+          import re, pathlib
+          p = pathlib.Path("android/app/build.gradle")
+          s = p.read_text()
+          if "RELEASE_STORE_FILE" not in s:
+              signing = """
+    signingConfigs {
+        release {
+            storeFile file(project.property("RELEASE_STORE_FILE"))
+            storePassword project.property("RELEASE_STORE_PASSWORD")
+            keyAlias project.property("RELEASE_KEY_ALIAS")
+            keyPassword project.property("RELEASE_KEY_PASSWORD")
+        }
+    }
+"""
+              s = re.sub(r"(android\s*\{)", r"\1" + signing, s, count=1)
+              s = re.sub(r"(buildTypes\s*\{\s*release\s*\{)",
+                         r"\1\n            signingConfig signingConfigs.release", s, count=1)
+              p.write_text(s)
+              print("signing config injected")
+          PY
+
+      - name: Build Signed Android App Bundle (AAB)
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease
+
+      - name: Verify Signature
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify -verbose:summary "$AAB" | tail -5
 
       - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
+
