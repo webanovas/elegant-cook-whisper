@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.gourmetnotes.app',
+  appId: 'com.siterix.cooknotes',
   appName: 'Gourmet Notes',
   webDir: 'dist'
 };
