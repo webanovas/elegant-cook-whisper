@@ -26,6 +26,8 @@ import { addGroceryItems } from "@/lib/grocery-store";
 import { scaleAmount } from "@/lib/scale";
 import { consultChefOnRecipe } from "@/lib/recipe-consult.functions";
 import type { Ingredient } from "@/lib/recipes.functions";
+import { useWakeLock } from "@/hooks/use-wake-lock";
+
 
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
@@ -44,6 +46,8 @@ function RecipeDetail() {
   const [servings, setServings] = useState(recipe?.servings || 2);
   const [addedAll, setAddedAll] = useState(false);
   const [cookMode, setCookMode] = useState(false);
+  useWakeLock(cookMode);
+
   const [editMode, setEditMode] = useState(false);
   const [consultOpen, setConsultOpen] = useState(false);
   const [scanNotice, setScanNotice] = useState<

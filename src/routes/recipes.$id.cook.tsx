@@ -5,6 +5,8 @@ import { useRecipe } from "@/lib/recipes-store";
 import { CookTimer } from "@/components/CookTimer";
 import { useLang, useT } from "@/lib/i18n";
 import { TimedText } from "@/components/TimedText";
+import { useWakeLock } from "@/hooks/use-wake-lock";
+
 
 export const Route = createFileRoute("/recipes/$id/cook")({
   ssr: false,
@@ -20,6 +22,8 @@ function CookMode() {
   const rtl = lang === "he";
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+  useWakeLock(true);
+
 
   const steps = useMemo(() => {
     if (!recipe) return [] as Array<{ text: string; section?: string }>;
