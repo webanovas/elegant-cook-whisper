@@ -26,6 +26,8 @@ import { addGroceryItems } from "@/lib/grocery-store";
 import { scaleAmount } from "@/lib/scale";
 import { consultChefOnRecipe } from "@/lib/recipe-consult.functions";
 import type { Ingredient } from "@/lib/recipes.functions";
+import { useWakeLock } from "@/hooks/use-wake-lock";
+
 
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
