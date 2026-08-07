@@ -46,6 +46,8 @@ function RecipeDetail() {
   const [servings, setServings] = useState(recipe?.servings || 2);
   const [addedAll, setAddedAll] = useState(false);
   const [cookMode, setCookMode] = useState(false);
+  useWakeLock(cookMode);
+
   const [editMode, setEditMode] = useState(false);
   const [consultOpen, setConsultOpen] = useState(false);
   const [scanNotice, setScanNotice] = useState<
