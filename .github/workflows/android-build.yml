@@ -75,6 +75,11 @@ jobs:
           import re, pathlib
           p = pathlib.Path("android/app/build.gradle")
           s = p.read_text()
+
+          # Pin versionCode / versionName for Google Play releases
+          s = re.sub(r"versionCode\s+\d+", "versionCode 2", s)
+          s = re.sub(r'versionName\s+"[^"]*"', 'versionName "1.0.1"', s)
+
           if "RELEASE_STORE_FILE" not in s:
               signing = "\n".join([
                   "",
@@ -92,8 +97,10 @@ jobs:
               s = re.sub(r"(buildTypes\s*\{\s*release\s*\{)",
                          lambda m: m.group(1) + "\n            signingConfig signingConfigs.release",
                          s, count=1)
-              p.write_text(s)
               print("signing config injected")
+
+          p.write_text(s)
+          print("versionCode/Name patched")
           PY
 
 
