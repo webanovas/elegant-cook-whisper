@@ -30,24 +30,22 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Build Web Assets
-        run: npm run build || true
-
-      - name: Prepare Dist Directory for Capacitor
+      - name: Prepare Fallback Web Dir
         run: |
           mkdir -p dist
-          if [ -d ".output/public" ]; then
-            cp -r .output/public/* dist/
-          fi
-          if [ ! -f "dist/index.html" ]; then
-            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>App</title></head><body><div id="root"></div><script type="module" src="/_build/assets/client.js"></script></body></html>' > dist/index.html
-          fi
+          cat > dist/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="en"><head><meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>CookNotes</title></head>
+          <body style="margin:0;background:#faf7f2"></body></html>
+          HTML
 
       - name: Add Android Platform & Sync
         run: |
-          npx cap init "CookNotes" "com.siterix.cooknotes" --web-dir "dist" || true
           npx cap add android || true
           npx cap sync android
+
 
       - name: Decode Release Keystore
         env:
@@ -77,8 +75,8 @@ jobs:
           s = p.read_text()
 
           # Pin versionCode / versionName for Google Play releases
-          s = re.sub(r"versionCode\s+\d+", "versionCode 2", s)
-          s = re.sub(r'versionName\s+"[^"]*"', 'versionName "1.0.1"', s)
+          s = re.sub(r"versionCode\s+\d+", "versionCode 3", s)
+          s = re.sub(r'versionName\s+"[^"]*"', 'versionName "1.0.2"', s)
 
           if "RELEASE_STORE_FILE" not in s:
               signing = "\n".join([
