@@ -29,7 +29,7 @@ export function AchievementsPill({
       aria-expanded={open}
       aria-label={t("ach_title")}
       title={t("ach_title")}
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] small-caps tabular-nums transition-colors ${
+      className={`inline-flex items-center gap-1.5 rounded-full border bg-card/70 px-3 py-2 text-[10px] small-caps tabular-nums shadow-sm transition-all active:scale-[0.98] ${
         open
           ? "border-terracotta text-terracotta"
           : "border-rule/50 text-ink-soft hover:text-terracotta"
@@ -69,14 +69,14 @@ export function AchievementsPanel({
           }}
           className="overflow-hidden"
         >
-          <div className="pt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="pt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {all.map((a) => {
               const pct = Math.round((a.progress / a.goal) * 100);
               return (
                 <div
                   key={a.id}
-                  className={`flex items-start gap-2.5 rounded-[3px] border px-3 py-2 ${
-                    a.unlocked ? "border-terracotta/40 bg-terracotta/5" : "border-rule/40"
+                   className={`flex items-start gap-3 rounded-2xl border px-4 py-4 shadow-sm ${
+                     a.unlocked ? "border-terracotta/30 bg-terracotta/5" : "border-rule/50 bg-card/60"
                   }`}
                 >
                   <span

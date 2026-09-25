@@ -32,7 +32,14 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 export const Route = createFileRoute("/recipes/$id")({
   ssr: false,
   head: () => ({
-    meta: [{ title: "Recipe — CookNotes" }],
+    meta: [
+      { title: "Recipe — CookNotes" },
+      { name: "description", content: "View, personalize, and cook a saved CookNotes recipe." },
+      { property: "og:title", content: "Recipe — CookNotes" },
+      { property: "og:description", content: "View, personalize, and cook a saved CookNotes recipe." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
   }),
   component: RecipeDetail,
 });
@@ -162,20 +169,20 @@ function RecipeDetail() {
   const sSections = recipe.instruction_sections;
 
   return (
-    <div className={`min-h-screen bg-background text-foreground pb-32 ${cookMode ? "cook-mode-on text-[1.08rem]" : ""}`}>
-      <div className="max-w-[440px] mx-auto relative">
+    <div className={`min-h-screen bg-background text-foreground px-3 py-3 sm:px-6 sm:py-8 pb-32 ${cookMode ? "cook-mode-on text-[1.08rem]" : ""}`}>
+      <div className="max-w-[920px] mx-auto relative floating-surface rounded-[2rem] overflow-hidden">
         {cookMode && (
           <button
             type="button"
             onClick={() => setCookMode(false)}
-            className="fixed top-3 end-3 z-50 rounded-full bg-foreground/90 text-background text-xs font-medium px-4 py-2 shadow-lg backdrop-blur-md hover:bg-foreground transition-colors"
+             className="fixed top-4 end-4 z-50 rounded-full bg-foreground/90 text-background text-xs font-medium px-4 py-2 shadow-lg backdrop-blur-md hover:bg-foreground"
           >
             × {t("exit_cook")}
           </button>
         )}
         {/* Hero */}
         <div className="relative">
-          <div className="w-full aspect-[4/5] bg-muted overflow-hidden">
+          <div className="w-full aspect-[4/3] sm:aspect-[16/9] bg-muted overflow-hidden">
             {imgSrc || fallbackHeroSrc ? (
               <img
                 src={imgSrc ?? fallbackHeroSrc ?? ""}
@@ -196,7 +203,7 @@ function RecipeDetail() {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
           <Link
             to="/"
-            className="absolute top-4 start-4 bg-background/80 backdrop-blur-md size-9 rounded-full grid place-items-center text-sm shadow-sm"
+             className="absolute top-4 start-4 bg-background/85 backdrop-blur-md size-10 rounded-full grid place-items-center text-sm shadow-md border border-rule/50"
             aria-label="Back"
           >
             ←
@@ -209,18 +216,18 @@ function RecipeDetail() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="px-6 -mt-16 relative z-10"
+          className="px-5 sm:px-10 lg:px-14 -mt-14 relative z-10 pb-12"
         >
           {recipe.tags[0] && (
-            <div className="inline-block bg-primary text-primary-foreground px-3 py-1 rounded-full text-[10px] font-medium mb-4 uppercase tracking-widest">
+             <div className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-full text-[10px] font-medium mb-5 uppercase tracking-widest shadow-sm">
               {recipe.tags[0]}
             </div>
           )}
-          <h1 className="font-serif text-4xl leading-tight text-balance mb-3">
+           <h1 className="font-serif text-[2.8rem] sm:text-[4rem] leading-[0.98] text-balance mb-4 max-w-3xl">
             {recipe.title}
           </h1>
           {recipe.description && (
-            <p className="text-sm text-muted-foreground italic text-pretty mb-4">
+             <p className="text-base text-muted-foreground text-pretty mb-6 max-w-2xl leading-relaxed">
               {recipe.description}
             </p>
           )}
@@ -250,7 +257,7 @@ function RecipeDetail() {
           <button
             type="button"
             onClick={() => setConsultOpen(true)}
-            className="w-full mb-6 rounded-lg border border-terracotta/40 bg-terracotta/5 px-4 py-3 text-start hover:bg-terracotta/10 transition-colors"
+             className="w-full mb-8 rounded-3xl border border-terracotta/30 bg-terracotta/5 px-5 py-4 text-start shadow-sm hover:bg-terracotta/10"
           >
             <p className="small-caps text-[10px] text-terracotta font-semibold">✦ {t("chef_note")}</p>
             <p className="text-sm font-serif italic text-ink mt-0.5">
@@ -262,7 +269,7 @@ function RecipeDetail() {
           {(recipe.chef_consultations ?? []).map((c) => (
             <div
               key={c.id}
-              className="mb-4 rounded border border-terracotta/40 bg-paper/40 p-3"
+               className="mb-4 rounded-2xl border border-terracotta/30 bg-paper/50 p-4 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -288,7 +295,7 @@ function RecipeDetail() {
             </div>
           ))}
 
-          <div className="flex justify-between py-6 border-y border-border">
+           <div className="flex justify-between rounded-3xl border border-border bg-card/60 px-5 py-6 shadow-sm">
             <MetaCell label={t("prep")} value={recipe.prep_time || "—"} />
             <div className="w-px bg-border" />
             <MetaCell label={t("cook")} value={recipe.cook_time || "—"} />
@@ -336,7 +343,7 @@ function RecipeDetail() {
             </div>
           )}
 
-          <section className="py-8">
+           <section className="mt-8 rounded-3xl bg-card/55 border border-rule/50 p-5 sm:p-8 shadow-sm">
             <div className="flex items-baseline justify-between mb-6">
               <h3 className="font-serif text-xl">{t("ingredients")}</h3>
               <button
@@ -391,7 +398,7 @@ function RecipeDetail() {
             )}
           </section>
 
-          <section className="pb-8">
+           <section className="mt-6 rounded-3xl bg-card/55 border border-rule/50 p-5 sm:p-8 shadow-sm">
             <h3 className="font-serif text-xl mb-6">{t("method")}</h3>
             {sSections && sSections.length > 0 ? (
               <div className="space-y-10">
@@ -435,7 +442,7 @@ function RecipeDetail() {
             )}
           </section>
 
-          <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground pt-6 border-t border-border">
+           <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground pt-8 mt-8 border-t border-border">
             {recipe.source_url ? (
               <a
                 href={recipe.source_url}
@@ -466,7 +473,7 @@ function RecipeDetail() {
                 setCookMode(true);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="w-full bg-foreground text-background py-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 shadow-xl ring-1 ring-foreground/10"
+             className="w-full bg-foreground text-background py-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 shadow-xl ring-1 ring-foreground/10 active:scale-[0.98]"
             >
               {t("start_cook")}
             </button>
@@ -502,7 +509,7 @@ function PersonalNoteBlock({ recipe, editMode }: { recipe: Recipe; editMode: boo
   if (!editMode && !hasNote) return null;
 
   return (
-    <div className="mt-6 rounded border border-dashed border-terracotta/40 bg-paper/30 p-3">
+     <div className="mt-8 rounded-3xl border border-dashed border-terracotta/35 bg-paper/45 p-5">
       <p className="small-caps text-[10px] text-terracotta font-semibold mb-1">
         {t("personal_note_label")}
       </p>
@@ -814,7 +821,7 @@ function ConsultModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] bg-foreground/40 backdrop-blur-sm grid place-items-end sm:place-items-center px-4 pb-6 sm:pb-0"
+         className="fixed inset-0 z-[60] bg-foreground/30 backdrop-blur-sm grid place-items-end sm:place-items-center px-4 pb-6 sm:pb-0"
       onClick={onClose}
     >
       <motion.div
@@ -823,7 +830,7 @@ function ConsultModal({
         exit={{ y: 40, opacity: 0 }}
         transition={{ duration: 0.25 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[420px] bg-background rounded-2xl border border-border shadow-2xl p-5"
+         className="w-full max-w-[460px] bg-background rounded-3xl border border-border shadow-2xl p-6"
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
@@ -955,7 +962,7 @@ function ShareButton({ recipe }: { recipe: Recipe }) {
       onClick={onShare}
       aria-label={t("share_recipe")}
       title={t("share_recipe")}
-      className="absolute top-4 end-4 bg-background/80 backdrop-blur-md h-9 px-3 rounded-full inline-flex items-center gap-1.5 text-[11px] shadow-sm small-caps text-ink hover:text-terracotta transition-colors"
+      className="absolute top-4 end-4 bg-background/85 backdrop-blur-md h-10 px-3 rounded-full inline-flex items-center gap-1.5 text-[11px] shadow-md border border-rule/50 small-caps text-ink hover:text-terracotta"
     >
       <span aria-hidden className="text-sm leading-none">↗</span>
       <span>{copied ? t("share_copied") : t("share_recipe")}</span>

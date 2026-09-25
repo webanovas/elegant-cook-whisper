@@ -14,6 +14,10 @@ export const Route = createFileRoute("/recipes/scan")({
     meta: [
       { title: "Scan a recipe — CookNotes" },
       { name: "description", content: "Snap a photo of a recipe and let the cook transcribe it." },
+      { property: "og:title", content: "Scan a recipe — CookNotes" },
+      { property: "og:description", content: "Snap a photo of a recipe and let CookNotes transcribe it." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ScanRecipePage,
@@ -131,8 +135,8 @@ function ScanRecipePage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-[560px] mx-auto">
+    <div className="min-h-screen py-5 sm:py-10 px-4">
+      <div className="max-w-[620px] mx-auto floating-surface rounded-[2rem] p-5 sm:p-9">
         <div className="flex justify-between items-center mb-6">
           <Link to="/" className="small-caps text-[11px] text-ink-soft hover:text-terracotta">
             ← {t("back_cookbook")}
@@ -142,7 +146,7 @@ function ScanRecipePage() {
 
         <header className="text-center">
           <p className="small-caps text-[11px] text-terracotta">{t("scan_kicker")}</p>
-          <h1 className="mt-2 font-serif italic text-[2.4rem] leading-tight">
+           <h1 className="mt-2 font-serif text-[3rem] leading-tight">
             {t("scan_title")}
           </h1>
           <p className="mt-3 text-sm text-ink-soft italic max-w-[400px] mx-auto">
@@ -170,7 +174,7 @@ function ScanRecipePage() {
           {images.length === 0 ? (
             <label
               htmlFor="scan-files"
-              className="block text-center py-14 border-2 border-dashed border-rule/60 rounded-md bg-paper-deep/30 cursor-pointer hover:border-terracotta/60 transition-colors"
+               className="block text-center py-16 px-5 border-2 border-dashed border-rule/60 rounded-3xl bg-paper-deep/30 cursor-pointer hover:border-terracotta/60"
             >
               <p className="font-serif italic text-lg text-ink">{t("scan_drop")}</p>
               <p className="mt-2 text-xs text-ink-soft">{t("scan_drop_hint")}</p>
@@ -181,7 +185,7 @@ function ScanRecipePage() {
                 {images.map((src, i) => (
                   <div
                     key={i}
-                    className="relative aspect-[3/4] overflow-hidden rounded border border-rule/40 bg-muted"
+                     className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-rule/40 bg-muted shadow-sm"
                   >
                     <img
                       src={src}
@@ -201,7 +205,7 @@ function ScanRecipePage() {
                 {images.length < MAX_FILES && (
                   <label
                     htmlFor="scan-files"
-                    className="aspect-[3/4] grid place-items-center rounded border-2 border-dashed border-rule/60 text-3xl text-ink-soft cursor-pointer hover:border-terracotta/60 hover:text-terracotta transition-colors"
+                     className="aspect-[3/4] grid place-items-center rounded-2xl border-2 border-dashed border-rule/60 text-3xl text-ink-soft cursor-pointer hover:border-terracotta/60 hover:text-terracotta"
                   >
                     +
                   </label>
@@ -221,7 +225,7 @@ function ScanRecipePage() {
             type="button"
             onClick={onScan}
             disabled={images.length === 0 || loading}
-            className="mt-6 w-full bg-ink text-paper py-3 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-50"
+             className="mt-6 w-full bg-ink text-paper py-3 rounded-2xl text-sm font-medium active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? t("scan_reading") : t("scan_go")}
           </button>

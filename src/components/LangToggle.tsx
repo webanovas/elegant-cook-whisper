@@ -8,7 +8,7 @@ export function LangToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={() => setLang(next)}
-      className={`small-caps text-[10px] text-ink-soft hover:text-terracotta transition-colors border border-rule/50 rounded-full px-3 py-1 ${className}`}
+      className={`text-xs font-medium text-ink-soft hover:text-terracotta transition-all border border-rule/60 bg-card/70 shadow-sm rounded-full px-3.5 py-2 active:scale-[0.98] ${className}`}
       aria-label={`Switch language to ${label}`}
     >
       {label}

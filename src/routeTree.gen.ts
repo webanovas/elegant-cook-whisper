@@ -18,7 +18,7 @@ import { Route as RecipesNewRouteImport } from './routes/recipes.new'
 import { Route as RecipesIdRouteImport } from './routes/recipes.$id'
 import { Route as BooksIdRouteImport } from './routes/books.$id'
 import { Route as ApiGenerateRecipeImageRouteImport } from './routes/api/generate-recipe-image'
-import { Route as RecipesIdCookRouteImport } from './routes/recipes.$id.cook'
+import { Route as RecipesIdCookRouteImport } from './routes/recipes.$id_.cook'
 import { Route as ApiPublicRecipeShareRouteImport } from './routes/api/public/recipe-share'
 
 const ImportRoute = ImportRouteImport.update({
@@ -67,9 +67,9 @@ const ApiGenerateRecipeImageRoute = ApiGenerateRecipeImageRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecipesIdCookRoute = RecipesIdCookRouteImport.update({
-  id: '/cook',
-  path: '/cook',
-  getParentRoute: () => RecipesIdRoute,
+  id: '/recipes/$id_/cook',
+  path: '/recipes/$id/cook',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRecipeShareRoute = ApiPublicRecipeShareRouteImport.update({
   id: '/api/public/recipe-share',
@@ -84,7 +84,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof ImportRoute
   '/api/generate-recipe-image': typeof ApiGenerateRecipeImageRoute
   '/books/$id': typeof BooksIdRoute
-  '/recipes/$id': typeof RecipesIdRouteWithChildren
+  '/recipes/$id': typeof RecipesIdRoute
   '/recipes/new': typeof RecipesNewRoute
   '/recipes/scan': typeof RecipesScanRoute
   '/api/public/recipe-share': typeof ApiPublicRecipeShareRoute
@@ -97,7 +97,7 @@ export interface FileRoutesByTo {
   '/import': typeof ImportRoute
   '/api/generate-recipe-image': typeof ApiGenerateRecipeImageRoute
   '/books/$id': typeof BooksIdRoute
-  '/recipes/$id': typeof RecipesIdRouteWithChildren
+  '/recipes/$id': typeof RecipesIdRoute
   '/recipes/new': typeof RecipesNewRoute
   '/recipes/scan': typeof RecipesScanRoute
   '/api/public/recipe-share': typeof ApiPublicRecipeShareRoute
@@ -111,11 +111,11 @@ export interface FileRoutesById {
   '/import': typeof ImportRoute
   '/api/generate-recipe-image': typeof ApiGenerateRecipeImageRoute
   '/books/$id': typeof BooksIdRoute
-  '/recipes/$id': typeof RecipesIdRouteWithChildren
+  '/recipes/$id': typeof RecipesIdRoute
   '/recipes/new': typeof RecipesNewRoute
   '/recipes/scan': typeof RecipesScanRoute
   '/api/public/recipe-share': typeof ApiPublicRecipeShareRoute
-  '/recipes/$id/cook': typeof RecipesIdCookRoute
+  '/recipes/$id_/cook': typeof RecipesIdCookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -156,7 +156,7 @@ export interface FileRouteTypes {
     | '/recipes/new'
     | '/recipes/scan'
     | '/api/public/recipe-share'
-    | '/recipes/$id/cook'
+    | '/recipes/$id_/cook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -166,10 +166,11 @@ export interface RootRouteChildren {
   ImportRoute: typeof ImportRoute
   ApiGenerateRecipeImageRoute: typeof ApiGenerateRecipeImageRoute
   BooksIdRoute: typeof BooksIdRoute
-  RecipesIdRoute: typeof RecipesIdRouteWithChildren
+  RecipesIdRoute: typeof RecipesIdRoute
   RecipesNewRoute: typeof RecipesNewRoute
   RecipesScanRoute: typeof RecipesScanRoute
   ApiPublicRecipeShareRoute: typeof ApiPublicRecipeShareRoute
+  RecipesIdCookRoute: typeof RecipesIdCookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -237,12 +238,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGenerateRecipeImageRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/recipes/$id/cook': {
-      id: '/recipes/$id/cook'
-      path: '/cook'
+    '/recipes/$id_/cook': {
+      id: '/recipes/$id_/cook'
+      path: '/recipes/$id/cook'
       fullPath: '/recipes/$id/cook'
       preLoaderRoute: typeof RecipesIdCookRouteImport
-      parentRoute: typeof RecipesIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/recipe-share': {
       id: '/api/public/recipe-share'
@@ -254,18 +255,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface RecipesIdRouteChildren {
-  RecipesIdCookRoute: typeof RecipesIdCookRoute
-}
-
-const RecipesIdRouteChildren: RecipesIdRouteChildren = {
-  RecipesIdCookRoute: RecipesIdCookRoute,
-}
-
-const RecipesIdRouteWithChildren = RecipesIdRoute._addFileChildren(
-  RecipesIdRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRoute,
@@ -273,10 +262,11 @@ const rootRouteChildren: RootRouteChildren = {
   ImportRoute: ImportRoute,
   ApiGenerateRecipeImageRoute: ApiGenerateRecipeImageRoute,
   BooksIdRoute: BooksIdRoute,
-  RecipesIdRoute: RecipesIdRouteWithChildren,
+  RecipesIdRoute: RecipesIdRoute,
   RecipesNewRoute: RecipesNewRoute,
   RecipesScanRoute: RecipesScanRoute,
   ApiPublicRecipeShareRoute: ApiPublicRecipeShareRoute,
+  RecipesIdCookRoute: RecipesIdCookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -15,6 +15,10 @@ export const Route = createFileRoute("/chat")({
         content:
           "Discuss what to cook with the resident chef. Find recipes you've saved or discover new dishes to try.",
       },
+      { property: "og:title", content: "Ask the Cook — CookNotes" },
+      { property: "og:description", content: "Find saved recipes or discover a new dish with your CookNotes chef." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ChatPage,
@@ -114,8 +118,8 @@ function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[520px] mx-auto px-6 pt-10 pb-4">
+    <div className="min-h-screen px-4 py-5 sm:py-10">
+      <div className="max-w-[620px] mx-auto floating-surface rounded-t-[2rem] px-6 sm:px-9 pt-8 pb-4">
         <div className="flex items-center justify-between">
           <Link
             to="/"
@@ -129,7 +133,7 @@ function ChatPage() {
           <p className="small-caps text-[11px] text-terracotta mb-3">
             {t("a_conversation_with")}
           </p>
-          <h1 className="font-serif text-[2.75rem] leading-[1.05] italic tracking-tight">
+           <h1 className="font-serif text-[3.4rem] leading-[1.05]">
             {t("the_cook")}
           </h1>
           <div className="ornament-rule mt-4">
@@ -138,7 +142,7 @@ function ChatPage() {
         </header>
       </div>
 
-      <div className="max-w-[520px] mx-auto px-6">
+       <div className="max-w-[620px] mx-auto px-6 sm:px-9 bg-card/55 border-x border-rule/50">
         <div
           ref={scrollRef}
           className="min-h-[52vh] max-h-[62vh] overflow-y-auto pr-1"
@@ -183,7 +187,7 @@ function ChatPage() {
 
         <form
           onSubmit={submit}
-          className="mt-4 mb-10 bg-card rounded-lg border border-border/70 shadow-[0_10px_30px_-16px_rgba(43,31,20,0.35)]"
+           className="mt-4 mb-0 bg-card rounded-3xl border border-border/70 shadow-lg"
         >
           <textarea
             ref={textareaRef}
@@ -202,11 +206,12 @@ function ChatPage() {
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="bg-terracotta text-primary-foreground px-4 py-1.5 rounded-md text-sm font-medium tracking-wide transition-transform active:scale-95 disabled:opacity-50"
+               className="bg-terracotta text-primary-foreground px-5 py-2 rounded-full text-sm font-medium disabled:opacity-50"
             >
               {t("ask")}
             </button>
-          </div>
+       </div>
+       <div className="max-w-[620px] mx-auto h-8 rounded-b-[2rem] bg-card/55 border-x border-b border-rule/50" />
         </form>
       </div>
     </div>
@@ -235,7 +240,7 @@ function AssistantBubble({
               key={s.id}
               to="/recipes/$id"
               params={{ id: s.id }}
-              className="group flex items-center justify-between gap-3 px-4 py-3 bg-card border border-border/70 rounded-md hover:border-terracotta/60 transition-colors"
+               className="group flex items-center justify-between gap-3 px-4 py-3 bg-card border border-border/70 rounded-2xl shadow-sm hover:border-terracotta/60"
             >
               <span className="font-serif text-[15px] italic">{s.title}</span>
               <span className="small-caps text-[10px] text-ink-soft group-hover:text-terracotta">

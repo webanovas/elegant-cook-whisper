@@ -18,6 +18,10 @@ export const Route = createFileRoute("/grocery")({
     meta: [
       { title: "Grocery list — CookNotes" },
       { name: "description", content: "Your running shopping list for tonight's cooking." },
+      { property: "og:title", content: "Grocery list — CookNotes" },
+      { property: "og:description", content: "Your running shopping list for tonight's cooking." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: GroceryPage,
@@ -40,8 +44,8 @@ function GroceryPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-[560px] mx-auto">
+    <div className="min-h-screen py-5 sm:py-10 px-4">
+      <div className="max-w-[620px] mx-auto floating-surface rounded-[2rem] p-5 sm:p-9">
         <div className="flex justify-between items-center mb-6">
           <Link
             to="/"
@@ -52,9 +56,9 @@ function GroceryPage() {
           <LangToggle />
         </div>
 
-        <header className="text-center">
+         <header className="text-center py-4">
           <p className="small-caps text-[11px] text-terracotta">{t("grocery_kicker")}</p>
-          <h1 className="mt-2 font-serif italic text-[2.4rem] leading-tight">
+           <h1 className="mt-2 font-serif text-[3rem] leading-tight">
             {t("grocery_title")}
           </h1>
           <div className="mx-auto mt-4 flex items-center gap-3 max-w-[220px]">
@@ -70,18 +74,18 @@ function GroceryPage() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={t("grocery_add_ph")}
-            className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+             className="soft-field flex-1 px-4 py-3 text-sm"
           />
           <button
             type="submit"
-            className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95"
+             className="bg-ink text-paper px-5 py-3 rounded-2xl text-sm font-medium active:scale-[0.98]"
           >
             {t("grocery_add")}
           </button>
         </form>
 
         {items.length === 0 ? (
-          <div className="mt-10 text-center py-16 border border-dashed border-rule/60 rounded-md bg-paper-deep/30">
+           <div className="mt-10 text-center py-16 border border-dashed border-rule/60 rounded-3xl bg-paper-deep/30">
             <p className="font-serif italic text-lg text-ink">{t("grocery_empty")}</p>
             <p className="mt-2 text-sm text-ink-soft">{t("grocery_empty_hint")}</p>
           </div>

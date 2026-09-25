@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 export type Lang = "en" | "he";
 
@@ -27,7 +27,6 @@ let initialized = false;
 function refresh() {
   cache = read();
   initialized = true;
-  applyDir(cache);
 }
 
 if (isBrowser()) {
@@ -66,7 +65,9 @@ function serverSnapshot(): Lang {
 }
 
 export function useLang(): Lang {
-  return useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+  const lang = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+  useEffect(() => applyDir(lang), [lang]);
+  return lang;
 }
 
 type Dict = Record<string, string>;

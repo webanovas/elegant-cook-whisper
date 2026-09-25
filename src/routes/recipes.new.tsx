@@ -12,6 +12,10 @@ export const Route = createFileRoute("/recipes/new")({
     meta: [
       { title: "Write a new recipe — CookNotes" },
       { name: "description", content: "Add your own recipe by hand." },
+      { property: "og:title", content: "Write a new recipe — CookNotes" },
+      { property: "og:description", content: "Add your own recipe by hand to your private CookNotes collection." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: NewRecipePage,
@@ -90,8 +94,8 @@ function NewRecipePage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-[560px] mx-auto">
+    <div className="min-h-screen py-5 sm:py-10 px-4">
+      <div className="max-w-[640px] mx-auto floating-surface rounded-[2rem] p-5 sm:p-9">
         <div className="flex justify-between items-center mb-6">
           <Link to="/" className="small-caps text-[11px] text-ink-soft hover:text-terracotta">
             ← {t("back_cookbook")}
@@ -101,7 +105,7 @@ function NewRecipePage() {
 
         <header className="text-center">
           <p className="small-caps text-[11px] text-terracotta">{t("manual_kicker")}</p>
-          <h1 className="mt-2 font-serif italic text-[2.4rem] leading-tight">
+           <h1 className="mt-2 font-serif text-[3rem] leading-tight">
             {t("manual_title")}
           </h1>
           <div className="mx-auto mt-4 flex items-center gap-3 max-w-[220px]">
@@ -191,13 +195,13 @@ function NewRecipePage() {
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              className="flex-1 bg-ink text-paper px-4 py-3 rounded text-sm font-medium transition-transform active:scale-95"
+              className="flex-1 bg-ink text-paper px-4 py-3 rounded-2xl text-sm font-medium active:scale-[0.98]"
             >
               {t("manual_save")}
             </button>
             <Link
               to="/"
-              className="px-4 py-3 rounded border border-border text-sm text-ink-soft grid place-items-center"
+              className="px-4 py-3 rounded-2xl border border-border bg-card/60 text-sm text-ink-soft grid place-items-center"
             >
               {t("cancel")}
             </Link>
@@ -205,20 +209,6 @@ function NewRecipePage() {
         </form>
       </div>
 
-      <style>{`
-        .input-line {
-          width: 100%;
-          background: transparent;
-          border: 1px solid rgba(0,0,0,0.15);
-          border-radius: 4px;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
-          font-family: inherit;
-          outline: none;
-          transition: border-color .15s;
-        }
-        .input-line:focus { border-color: rgba(168,93,68,0.6); }
-      `}</style>
     </div>
   );
 }
