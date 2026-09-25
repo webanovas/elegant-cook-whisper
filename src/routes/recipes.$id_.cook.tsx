@@ -8,7 +8,7 @@ import { TimedText } from "@/components/TimedText";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 
 
-export const Route = createFileRoute("/recipes/$id/cook")({
+export const Route = createFileRoute("/recipes/$id_/cook")({
   ssr: false,
   head: () => ({ meta: [
     { title: "Cook Mode — CookNotes" },
