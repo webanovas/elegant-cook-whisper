@@ -82,18 +82,18 @@ function CookMode() {
   const current = steps[index];
 
   return (
-    <div className="min-h-screen h-[100dvh] bg-background text-foreground flex flex-col relative">
+    <div className="min-h-screen h-[100dvh] bg-background text-foreground flex flex-col relative p-3 sm:p-6">
       {/* Tiny always-visible exit button in the top corner */}
       <Link
         to="/recipes/$id"
         params={{ id }}
         aria-label={t("exit")}
-        className="absolute top-3 end-3 z-20 size-9 rounded-full grid place-items-center bg-background/70 backdrop-blur-md border border-border/60 text-ink-soft hover:text-terracotta hover:border-terracotta/50 transition-colors text-lg leading-none"
+        className="absolute top-5 end-5 z-20 size-10 rounded-full grid place-items-center bg-card/90 backdrop-blur-md border border-border text-ink-soft shadow-md hover:text-terracotta hover:border-terracotta/50 text-lg leading-none"
       >
         ×
       </Link>
 
-      <div className="max-w-[440px] w-full mx-auto flex-1 flex flex-col overflow-hidden">
+      <div className="max-w-[780px] w-full mx-auto flex-1 flex flex-col overflow-hidden floating-surface rounded-[2rem]">
         <header className="pt-5 px-6 pb-2 flex justify-center">
           <div className="flex gap-1" dir="ltr">
             {steps.map((_step, i) => (
@@ -111,7 +111,7 @@ function CookMode() {
           </div>
         </header>
 
-        <main className="flex-1 flex flex-col justify-center px-8 text-center overflow-hidden relative">
+         <main className="flex-1 flex flex-col justify-center px-7 sm:px-14 text-center overflow-hidden relative">
           <span
             dir="ltr"
             className="absolute top-0 left-1/2 -translate-x-1/2 text-[10px] font-medium tabular-nums text-ink-soft"
@@ -127,7 +127,7 @@ function CookMode() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -direction * slideSign * 60, opacity: 0 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-10"
+               className="mb-12 rounded-3xl bg-paper/70 border border-rule/50 px-5 py-8 sm:px-10 sm:py-12 shadow-sm"
             >
               {current.section && (
                 <span className="small-caps text-[11px] text-terracotta mb-2 block">
@@ -137,7 +137,7 @@ function CookMode() {
               <span className="text-xs uppercase tracking-[0.2em] text-primary font-semibold mb-4 block">
                 {t("step")} {index + 1}
               </span>
-              <h2 className="font-serif text-2xl sm:text-3xl leading-snug text-balance">
+               <h2 className="font-serif text-3xl sm:text-5xl leading-[1.15] text-balance">
                 <TimedText text={current.text} />
               </h2>
             </motion.div>
@@ -153,7 +153,7 @@ function CookMode() {
             type="button"
             onClick={() => go(-1)}
             disabled={index === 0}
-            className="py-4 rounded-xl border border-border text-sm font-medium disabled:opacity-40"
+             className="py-4 rounded-2xl border border-border bg-card/60 text-sm font-medium disabled:opacity-40"
           >
             {t("previous")}
           </button>
@@ -161,7 +161,7 @@ function CookMode() {
             <button
               type="button"
               onClick={() => go(1)}
-              className="py-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium"
+               className="py-4 rounded-2xl bg-primary text-primary-foreground text-sm font-medium shadow-lg"
             >
               {t("next_step")}
             </button>
@@ -169,7 +169,7 @@ function CookMode() {
             <Link
               to="/recipes/$id"
               params={{ id }}
-              className="py-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium grid place-items-center"
+               className="py-4 rounded-2xl bg-primary text-primary-foreground text-sm font-medium grid place-items-center shadow-lg"
             >
               {t("finish")}
             </Link>

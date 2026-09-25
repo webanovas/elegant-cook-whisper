@@ -90,8 +90,8 @@ function NewRecipePage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-[560px] mx-auto">
+    <div className="min-h-screen py-5 sm:py-10 px-4">
+      <div className="max-w-[640px] mx-auto floating-surface rounded-[2rem] p-5 sm:p-9">
         <div className="flex justify-between items-center mb-6">
           <Link to="/" className="small-caps text-[11px] text-ink-soft hover:text-terracotta">
             ← {t("back_cookbook")}
@@ -101,7 +101,7 @@ function NewRecipePage() {
 
         <header className="text-center">
           <p className="small-caps text-[11px] text-terracotta">{t("manual_kicker")}</p>
-          <h1 className="mt-2 font-serif italic text-[2.4rem] leading-tight">
+           <h1 className="mt-2 font-serif text-[3rem] leading-tight">
             {t("manual_title")}
           </h1>
           <div className="mx-auto mt-4 flex items-center gap-3 max-w-[220px]">

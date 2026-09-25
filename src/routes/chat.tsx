@@ -114,8 +114,8 @@ function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[520px] mx-auto px-6 pt-10 pb-4">
+    <div className="min-h-screen px-4 py-5 sm:py-10">
+      <div className="max-w-[620px] mx-auto floating-surface rounded-t-[2rem] px-6 sm:px-9 pt-8 pb-4">
         <div className="flex items-center justify-between">
           <Link
             to="/"
@@ -129,7 +129,7 @@ function ChatPage() {
           <p className="small-caps text-[11px] text-terracotta mb-3">
             {t("a_conversation_with")}
           </p>
-          <h1 className="font-serif text-[2.75rem] leading-[1.05] italic tracking-tight">
+           <h1 className="font-serif text-[3.4rem] leading-[1.05]">
             {t("the_cook")}
           </h1>
           <div className="ornament-rule mt-4">
@@ -138,7 +138,7 @@ function ChatPage() {
         </header>
       </div>
 
-      <div className="max-w-[520px] mx-auto px-6">
+       <div className="max-w-[620px] mx-auto px-6 sm:px-9 bg-card/55 border-x border-rule/50">
         <div
           ref={scrollRef}
           className="min-h-[52vh] max-h-[62vh] overflow-y-auto pr-1"
