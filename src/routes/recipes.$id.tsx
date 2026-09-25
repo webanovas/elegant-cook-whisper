@@ -962,7 +962,7 @@ function ShareButton({ recipe }: { recipe: Recipe }) {
       onClick={onShare}
       aria-label={t("share_recipe")}
       title={t("share_recipe")}
-      className="absolute top-4 end-4 bg-background/80 backdrop-blur-md h-9 px-3 rounded-full inline-flex items-center gap-1.5 text-[11px] shadow-sm small-caps text-ink hover:text-terracotta transition-colors"
+      className="absolute top-4 end-4 bg-background/85 backdrop-blur-md h-10 px-3 rounded-full inline-flex items-center gap-1.5 text-[11px] shadow-md border border-rule/50 small-caps text-ink hover:text-terracotta"
     >
       <span aria-hidden className="text-sm leading-none">↗</span>
       <span>{copied ? t("share_copied") : t("share_recipe")}</span>
