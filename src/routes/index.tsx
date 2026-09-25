@@ -27,6 +27,10 @@ export const Route = createFileRoute("/")({
         content:
           "A private, growing library of the recipes you love. Filter by dish, prep time, rating, or ask the cook for a vibe.",
       },
+      { property: "og:title", content: "CookNotes — Your private recipe library" },
+      { property: "og:description", content: "A private, growing library of the recipes you love." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: LibraryPage,

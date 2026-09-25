@@ -10,7 +10,14 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 
 export const Route = createFileRoute("/recipes/$id/cook")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Cook Mode — CookNotes" }] }),
+  head: () => ({ meta: [
+    { title: "Cook Mode — CookNotes" },
+    { name: "description", content: "Follow your CookNotes recipe one clear step at a time." },
+    { property: "og:title", content: "Cook Mode — CookNotes" },
+    { property: "og:description", content: "Follow your CookNotes recipe one clear step at a time." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: CookMode,
 });
 

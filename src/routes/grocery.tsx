@@ -18,6 +18,10 @@ export const Route = createFileRoute("/grocery")({
     meta: [
       { title: "Grocery list — CookNotes" },
       { name: "description", content: "Your running shopping list for tonight's cooking." },
+      { property: "og:title", content: "Grocery list — CookNotes" },
+      { property: "og:description", content: "Your running shopping list for tonight's cooking." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: GroceryPage,
