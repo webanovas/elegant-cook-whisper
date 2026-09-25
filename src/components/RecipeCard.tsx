@@ -43,12 +43,12 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: Math.min(index, 12) * 0.03, ease: [0.16, 1, 0.3, 1] }}
-      className="group relative"
+      className="group relative mb-8 break-inside-avoid"
     >
       <Link
         to="/recipes/$id"
         params={{ id: recipe.id }}
-        className="block"
+        className="block rounded-[2rem] outline-none focus-visible:ring-2 focus-visible:ring-terracotta/40 active:scale-[0.98]"
         onPointerDown={startPress}
         onPointerUp={clearTimer}
         onPointerLeave={clearTimer}
@@ -64,24 +64,12 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
           }
         }}
       >
-        <div className="flex items-baseline gap-2 mb-2">
-          <span className="small-caps text-[9px] text-terracotta">
-            pl {chapter}
-          </span>
-          <span className="flex-1 h-px bg-rule/40" />
-          {totalTime && (
-            <span className="small-caps text-[9px] text-ink-soft truncate max-w-[60%]">
-              {totalTime}
-            </span>
-          )}
-        </div>
-
-        <div className="w-full aspect-[4/3] overflow-hidden bg-muted border border-rule/40 shadow-[0_10px_20px_-14px_rgba(43,31,20,0.5)]">
+        <div className={`w-full overflow-hidden rounded-[2rem] bg-muted border border-rule/50 shadow-[0_24px_54px_-30px_color-mix(in_oklab,var(--ink)_45%,transparent)] transition-all duration-700 group-hover:-translate-y-1.5 group-hover:shadow-[0_32px_68px_-30px_color-mix(in_oklab,var(--ink)_42%,transparent)] ${index % 3 === 1 ? "aspect-[4/5]" : index % 3 === 2 ? "aspect-square" : "aspect-[5/6]"}`}>
           {imgSrc ? (
             <img
               src={imgSrc}
               alt={recipe.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.055]"
               loading="lazy"
               decoding="async"
               draggable={false}
@@ -95,19 +83,20 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
           )}
         </div>
 
-        <h3 className="mt-3 font-serif text-[15px] sm:text-base italic leading-snug text-balance line-clamp-2 group-hover:text-terracotta transition-colors">
+        <div className="mt-5 flex items-center justify-between gap-3 px-1">
+          <span className="small-caps text-[9px] text-terracotta">{recipe.tags[0] || `pl ${chapter}`}</span>
+          {totalTime && <span className="text-[10px] text-ink-soft truncate">{totalTime}</span>}
+        </div>
+
+        <h3 className="mt-2 px-1 font-serif text-[1.65rem] leading-[1.05] text-balance line-clamp-2 group-hover:text-terracotta transition-colors">
           {recipe.title}
         </h3>
 
-        <div className="mt-1.5 flex items-center justify-between gap-2">
-          {recipe.tags.length > 0 ? (
-            <p className="small-caps text-[9px] text-ink-soft truncate">
-              {recipe.tags.slice(0, 2).join(" · ")}
-            </p>
-          ) : <span />}
+        <div className="mt-3 flex items-center justify-between gap-2 px-1">
+          {recipe.description ? <p className="text-sm leading-relaxed text-ink-soft line-clamp-2">{recipe.description}</p> : <span />}
           <div className="shrink-0">
             {!recipe.rating || recipe.rating === 0 ? (
-              <span className="small-caps text-[8px] text-ink-soft/60">unrated</span>
+              <span className="small-caps text-[8px] text-ink-soft/60">{chapter}</span>
             ) : (
               <StarRating value={recipe.rating} readOnly size="sm" />
             )}
@@ -122,7 +111,7 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-paper/95 backdrop-blur-[2px] border border-rule/50 p-3 text-center"
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-[2rem] bg-paper/95 backdrop-blur-md border border-rule/60 p-5 text-center shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="font-serif italic text-[13px] leading-snug text-ink">
@@ -135,7 +124,7 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
                   deleteRecipeLocal(recipe.id);
                   setConfirming(false);
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-terracotta text-paper small-caps text-[10px] tracking-wide"
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 bg-terracotta text-paper small-caps text-[10px] tracking-wide"
               >
                 <Trash2 className="w-3 h-3" />
                 {t("delete")}
@@ -143,7 +132,7 @@ export function RecipeCard({ recipe, index }: { recipe: Recipe; index: number })
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="px-3 py-1.5 border border-rule small-caps text-[10px] tracking-wide text-ink-soft"
+                className="rounded-full px-4 py-2 border border-rule small-caps text-[10px] tracking-wide text-ink-soft"
               >
                 {t("cancel")}
               </button>

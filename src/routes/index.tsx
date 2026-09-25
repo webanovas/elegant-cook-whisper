@@ -52,29 +52,29 @@ function LibraryPage() {
               : "tier_legendary";
 
   return (
-    <div className="min-h-screen py-5 px-4">
-      <div className="max-w-[1100px] mx-auto">
-        <header className="flex items-center gap-3 border-b border-rule/50 pb-3">
+    <div className="min-h-screen px-4 py-5 sm:px-7 sm:py-8 lg:px-10 lg:py-10">
+      <div className="max-w-[1280px] mx-auto floating-surface rounded-[2rem] px-5 py-7 sm:px-9 sm:py-10 lg:px-14 lg:py-14 overflow-hidden">
+        <header className="flex flex-wrap items-end gap-4 sm:gap-6">
           <motion.span
             key={count}
             initial={{ opacity: 0, y: 3 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             dir="ltr"
-            className="font-serif italic text-[2.4rem] leading-none tabular-nums text-terracotta shrink-0"
+            className="font-serif text-[3.5rem] sm:text-[4.5rem] leading-[0.8] tabular-nums text-terracotta shrink-0"
           >
             {count}
           </motion.span>
           <div className="min-w-0">
-            <h1 className="font-serif italic text-[1.35rem] leading-none tracking-tight">
+            <h1 className="font-serif text-[2rem] sm:text-[2.6rem] leading-none">
               {t("your_library")}
             </h1>
-            <p className="mt-1 font-serif italic text-[11px] text-ink-soft leading-snug truncate">
+            <p className="mt-2 text-xs text-ink-soft leading-snug truncate">
               {t(tierKey)}
             </p>
           </div>
 
-          <div className="ms-auto flex items-center gap-1.5 shrink-0">
+          <div className="ms-auto flex items-center gap-2 shrink-0">
             <AchievementsPill
               recipes={recipes}
               open={achOpen}
@@ -84,7 +84,7 @@ function LibraryPage() {
               to="/grocery"
               aria-label={t("grocery_link")}
               title={t("grocery_link")}
-              className="inline-flex items-center justify-center rounded-full border border-rule/50 w-[26px] h-[26px] text-[11px] text-ink-soft hover:text-terracotta transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-rule/60 bg-card/70 size-9 text-sm text-ink-soft shadow-sm hover:text-terracotta"
             >
               🛒
             </Link>
@@ -92,7 +92,7 @@ function LibraryPage() {
               to="/chat"
               aria-label={t("ask_the_cook")}
               title={t("ask_the_cook")}
-              className="inline-flex items-center justify-center rounded-full border border-terracotta/40 w-[26px] h-[26px] text-[11px] text-terracotta hover:bg-terracotta hover:text-paper transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-terracotta/30 bg-terracotta/5 size-9 text-sm text-terracotta shadow-sm hover:bg-terracotta hover:text-paper"
             >
               ✦
             </Link>
@@ -102,13 +102,13 @@ function LibraryPage() {
 
         <AchievementsPanel recipes={recipes} open={achOpen} />
 
-        <div className="mt-3">
+        <div className="mt-8">
           <ImportCard />
         </div>
 
         <FilterableGallery recipes={recipes} />
 
-        <p className="mt-10 text-center small-caps text-[10px] text-ink-soft/70">
+        <p className="mt-16 text-center small-caps text-[10px] text-ink-soft/70">
           {t("kept_privately")}
         </p>
       </div>
@@ -182,11 +182,11 @@ function ImportCard() {
   }
 
   return (
-    <section className="paper-page rounded-[3px] overflow-hidden">
+    <section className="paper-page rounded-3xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+        className="w-full flex items-center justify-between gap-3 px-5 py-4 sm:px-6 text-left active:scale-[0.99]"
         aria-expanded={open}
       >
         <span className="small-caps text-[11px] text-terracotta">
@@ -202,7 +202,7 @@ function ImportCard() {
       </button>
 
       {open && (
-        <div className="border-t border-rule/40 px-4 py-4 sm:px-5">
+         <div className="border-t border-rule/40 px-5 py-5 sm:px-6">
           <div className="flex items-center justify-center gap-2">
             <ModeTab active={mode === "url"} onClick={() => setMode("url")}>
               {t("from_url")}
@@ -221,13 +221,13 @@ function ImportCard() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={t("paste_url_ph")}
-                className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+                 className="soft-field flex-1 px-4 py-3 text-sm font-serif italic"
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+                 className="bg-ink text-paper px-5 py-3 rounded-2xl text-sm font-medium active:scale-[0.98] disabled:opacity-60"
               >
                 {loading ? t("reading") : t("clip")}
               </button>
@@ -241,13 +241,13 @@ function ImportCard() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t("search_ph_web")}
-                  className="flex-1 bg-card/60 border border-border/70 rounded px-3 py-2 text-sm font-serif italic outline-none focus:border-terracotta/60 transition-colors"
+                   className="soft-field flex-1 px-4 py-3 text-sm font-serif italic"
                   disabled={searching || loading}
                 />
                 <button
                   type="submit"
                   disabled={searching || loading}
-                  className="bg-ink text-paper px-4 py-2 rounded text-sm font-medium transition-transform active:scale-95 disabled:opacity-60"
+                   className="bg-ink text-paper px-5 py-3 rounded-2xl text-sm font-medium active:scale-[0.98] disabled:opacity-60"
                 >
                   {searching ? t("searching") : t("search")}
                 </button>
@@ -564,7 +564,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
   return (
     <section>
       {hasRecipes && (
-        <div className="mt-4 grid gap-4 md:grid-cols-[1fr_320px] items-start">
+         <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_360px] items-start">
           {/* Toolbar + collapsible filters/search */}
           <LayoutGroup>
             <motion.div layout="position" className="space-y-3">
@@ -674,7 +674,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
                     transition={{ height: { duration: 0.32, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.22 } }}
                     className="overflow-hidden"
                   >
-                    <div className="paper-page rounded-[3px] px-4 py-3 sm:px-5 flex items-center gap-2">
+                     <div className="paper-page rounded-2xl px-4 py-3 sm:px-5 flex items-center gap-2">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-ink-soft shrink-0">
                         <circle cx="11" cy="11" r="7" />
                         <path d="m20 20-3.5-3.5" />
@@ -719,7 +719,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
                     transition={{ height: { duration: 0.36, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.24 } }}
                     className="overflow-hidden"
                   >
-                    <div className="paper-page rounded-[3px] px-4 py-5 sm:px-5 space-y-6">
+                     <div className="paper-page rounded-3xl px-5 py-6 sm:px-6 space-y-6">
                       <QuicknessTabs value={quickIdx} onChange={setQuickIdx} t={t} />
                       <RatingStars value={minRating} onChange={setMinRating} t={t} />
                     </div>
@@ -730,7 +730,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
           </LayoutGroup>
 
           {/* Ask the cook */}
-          <div className="paper-page rounded-[3px] px-4 py-4 sm:px-5">
+           <div className="paper-page rounded-3xl px-5 py-5 sm:px-6">
             <p className="small-caps text-[10px] text-terracotta">
               {t("ask_narrow")}
             </p>
@@ -805,9 +805,9 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
       )}
 
       {/* The library itself */}
-      <div className="mt-8">
+       <div className="mt-12">
         {!hasRecipes ? (
-          <div className="text-center py-16 border border-dashed border-rule/60 rounded-md bg-paper-deep/30">
+           <div className="text-center py-20 px-6 border border-dashed border-rule/60 rounded-3xl bg-paper-deep/30">
             <p className="font-serif italic text-xl text-ink">
               {t("first_page_lib")}
             </p>
@@ -818,7 +818,7 @@ function FilterableGallery({ recipes }: { recipes: Recipe[] }) {
             {t("no_match_short")}
           </p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-5 gap-y-8">
+           <div className="columns-1 sm:columns-2 lg:columns-3 gap-7 lg:gap-10">
             {filtered.map((r, i) => (
               <RecipeCard key={r.id} recipe={r} index={i} />
             ))}
