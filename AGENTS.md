@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep the native Android project committed so launcher icons and release configuration are reproducible in local and CI builds.
+- Use the cream-and-terracotta floating-gallery design system across screens so the product feels visually cohesive.

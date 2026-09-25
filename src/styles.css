@@ -6,8 +6,8 @@
 
 @theme inline {
   --font-serif: "Cormorant Garamond", "Lora", ui-serif, Georgia, serif;
-  --font-book: "Lora", ui-serif, Georgia, serif;
-  --font-sans: "Instrument Sans", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-book: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "Karla", ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -48,35 +48,35 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 1rem;
 
-  /* Vintage cookbook palette */
-  --paper: oklch(0.945 0.028 82);           /* aged cream #f2ead6 */
-  --paper-deep: oklch(0.88 0.035 78);       /* deeper cream shadow */
-  --ink: oklch(0.24 0.02 45);               /* warm dark ink #2b1f14 */
-  --ink-soft: oklch(0.42 0.02 50);          /* softer ink for body */
-  --terracotta: oklch(0.55 0.14 40);        /* #a85d44 */
-  --gold: oklch(0.68 0.08 78);              /* aged gold #b8935a */
-  --rule: oklch(0.62 0.04 55);              /* faded rule line */
+  /* Cream & terracotta — selected floating gallery palette. */
+  --paper: oklch(0.982 0.006 75);
+  --paper-deep: oklch(0.93 0.022 76);
+  --ink: oklch(0.29 0.03 43);
+  --ink-soft: oklch(0.48 0.025 48);
+  --terracotta: oklch(0.65 0.13 42);
+  --gold: oklch(0.72 0.095 75);
+  --rule: oklch(0.84 0.025 67);
 
   --background: var(--paper);
   --foreground: var(--ink);
-  --card: oklch(0.965 0.02 82);
+  --card: oklch(0.955 0.016 77);
   --card-foreground: var(--ink);
   --popover: oklch(0.97 0.018 82);
   --popover-foreground: var(--ink);
   --primary: var(--terracotta);
   --primary-foreground: oklch(0.97 0.02 82);
-  --secondary: oklch(0.9 0.03 78);
+  --secondary: oklch(0.93 0.022 76);
   --secondary-foreground: var(--ink);
-  --muted: oklch(0.9 0.025 80);
+  --muted: oklch(0.94 0.018 77);
   --muted-foreground: var(--ink-soft);
   --accent: var(--gold);
   --accent-foreground: var(--ink);
   --destructive: oklch(0.5 0.19 27);
   --destructive-foreground: oklch(0.98 0.01 80);
-  --border: oklch(0.78 0.03 70);
-  --input: oklch(0.9 0.025 78);
+  --border: oklch(0.87 0.022 70);
+  --input: oklch(0.94 0.018 77);
   --ring: var(--terracotta);
 }
 
@@ -123,13 +123,10 @@
   }
 
   body {
-    background-image:
-      radial-gradient(
-        1200px 800px at 50% -10%,
-        color-mix(in oklab, var(--gold) 12%, transparent) 0%,
-        transparent 60%
-      );
+    min-width: 320px;
+    background-image: linear-gradient(180deg, color-mix(in oklab, var(--paper-deep) 28%, transparent), transparent 34rem);
     background-repeat: no-repeat;
+    letter-spacing: 0;
   }
 
 
@@ -138,26 +135,76 @@
   h3,
   h4 {
     font-family: var(--font-serif);
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
+  }
+
+  button,
+  a,
+  input,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  a {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 220ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  button:active,
+  a:active {
+    transform: scale(0.98);
   }
 }
 
 /* Paper page — the main surface pretending to be a book leaf. */
 @utility paper-page {
   position: relative;
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--paper) 96%, white 4%) 0%,
-      var(--paper) 40%,
-      color-mix(in oklab, var(--paper-deep) 92%, transparent) 100%
-    );
+  background: color-mix(in oklab, var(--card) 88%, var(--paper) 12%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 40px 60px -30px color-mix(in oklab, var(--ink) 30%, transparent),
-    0 6px 20px -10px color-mix(in oklab, var(--ink) 20%, transparent);
-  border-left: 1px solid color-mix(in oklab, var(--ink) 6%, transparent);
-  border-right: 1px solid color-mix(in oklab, var(--ink) 6%, transparent);
+    0 1px 0 color-mix(in oklab, var(--paper) 88%, transparent) inset,
+    0 24px 60px -34px color-mix(in oklab, var(--ink) 24%, transparent),
+    0 8px 24px -18px color-mix(in oklab, var(--ink) 16%, transparent);
+  border: 1px solid color-mix(in oklab, var(--rule) 70%, transparent);
+}
+
+@utility floating-surface {
+  background: color-mix(in oklab, var(--card) 88%, var(--paper) 12%);
+  border: 1px solid color-mix(in oklab, var(--rule) 72%, transparent);
+  box-shadow: 0 26px 70px -38px color-mix(in oklab, var(--ink) 28%, transparent);
+}
+
+@utility soft-field {
+  background: color-mix(in oklab, var(--paper) 74%, var(--card) 26%);
+  border: 1px solid color-mix(in oklab, var(--rule) 74%, transparent);
+  border-radius: 1rem;
+  outline: none;
+  &:focus {
+    border-color: color-mix(in oklab, var(--terracotta) 60%, var(--rule));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--terracotta) 12%, transparent);
+  }
+}
+
+@utility input-line {
+  width: 100%;
+  background: color-mix(in oklab, var(--paper) 74%, var(--card) 26%);
+  border: 1px solid color-mix(in oklab, var(--rule) 74%, transparent);
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  outline: none;
+  &:focus {
+    border-color: var(--terracotta);
+  }
+}
+
+@keyframes gentle-float-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@utility animate-gentle-in {
+  animation: gentle-float-up 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @utility paper-page-inner {
@@ -206,6 +253,15 @@
   font-variant: small-caps;
   letter-spacing: 0.18em;
   text-transform: lowercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Drop cap for first letter of a paragraph. */
